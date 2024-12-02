@@ -1,0 +1,97 @@
+port: 7890
+socks-port: 7891
+authentication:
+  - "proxy_username:proxy_password"
+skip-auth-prefixes:
+  - 127.0.0.1/8
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+  - ::1/128
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:9093
+external-controller-tls: 0.0.0.0:9443
+secret: Hi8899
+external-ui: /ui
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.metadb"
+geo-auto-update: false
+geo-update-interval: 24
+global-client-fingerprint: chrome
+
+profile:
+  store-selected: false
+  store-fake-ip: true
+
+tun:
+  enable: true
+  stack: system
+  dns-hijack:
+    - 0.0.0.0:53
+  auto-route: true
+  auto-redirect: true
+  strict-route: true
+  auto-detect-interface: true
+
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:53
+  # 默认DNS服务器 (用于解析普通域名)
+  nameserver:
+    - 114.114.114.114
+    - 223.5.5.5
+    - 1.1.1.1
+    - 8.8.8.8
+  # DNS 匹配规则
+  enhanced-mode: fake-ip  # 或者 redir-host
+  fake-ip-range: 198.18.0.1/16    # fake-ip 地址池
+  use-hosts: true        # 启用 hosts
+  # 用于解析国外域名
+  fallback:
+    - https://dns.google/dns-query    # Google DoH
+    - https://doh.dns.sb/dns-query
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.twnic.tw/dns-query
+    - tls://9.9.9.9:853
+  # 优化设置
+  default-nameserver: # 用于解析 nameserver 中的 DNS 服务器地址
+    - 223.5.5.5
+    - 8.8.8.8
+  # 域名匹配规则
+  fallback-filter:
+    geoip: true         # 启用 geoip
+    geoip-code: CN      # 中国大陆 IP 不使用 fallback
+    ipcidr: # 指定 IP 段不使用 fallback
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+    domain: # 指定域名使用 fallback
+      - '+.google.com'
+      - '+.facebook.com'
+      - '+.youtube.com'
+      - '+.github.com'
+proxy-providers:
+  provider1:
+    type: file
+    path: ./proxies.yaml
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 30
+proxy-groups:
+  - name: group1
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 30
+    use:
+      - provider1
+rules:
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolv
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - MATCH,group1
