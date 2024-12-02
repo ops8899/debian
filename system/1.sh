@@ -65,6 +65,12 @@ fi
 bash zsh.sh
 
 # ufw
-ufw_set -p "$TCP_PORTS" -u "$UDP_PORTS" -w "$WHITELIST_IPS" -d "$DIG_DOMAIN" -l "$LAN_IPS"
+# 检查参数是否有值
+if [[ -n "$TCP_PORTS" || -n "$UDP_PORTS" || -n "$WHITELIST_IPS" || -n "$DIG_DOMAIN" || -n "$LAN_IPS" ]]; then
+    echo "执行 ufw_set 命令..."
+    ufw_set -p "$TCP_PORTS" -u "$UDP_PORTS" -w "$WHITELIST_IPS" -d "$DIG_DOMAIN" -l "$LAN_IPS"
+else
+    echo "未提供任何参数，跳过 ufw_set 执行。"
+fi
 
 echo "done"

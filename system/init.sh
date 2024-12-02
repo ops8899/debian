@@ -16,11 +16,15 @@ apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
 
 # 安装常用工具和软件，使用选项来避免交互
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-  logrotate net-tools isc-dhcp-client iftop wget curl htop vim lsof unzip zip psmisc git ufw rsync cron \
-  traceroute dnsutils sudo openssh-server iputils-ping \
+  sudo openssh-server systemd systemd-sysv cron logrotate \
+  net-tools isc-dhcp-client iftop wget curl htop vim lsof unzip zip psmisc git ufw rsync \
+  traceroute dnsutils  iputils-ping \
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
   apt-transport-https ca-certificates software-properties-common \
   python3-pip python3-venv zsh iproute2 aria2 telnet rinetd rclone
+# ssh
+systemctl enable ssh
+systemctl start ssh
 
 # 安装 cron
 sudo systemctl start cron
