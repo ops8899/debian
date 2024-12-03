@@ -10,7 +10,7 @@ TCP_PORTS=""
 UDP_PORTS=""
 WHITELIST_IPS=""
 DIG_DOMAIN=""
-LAN_IPS="10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+LAN_IPS=""
 
 # 参数解析
 while [[ $# -gt 0 ]]; do
