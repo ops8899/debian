@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 RUN git clone https://github.com/ops8899/debian.git /opt/debian && \
     chmod +x -R /opt/debian/system/ && \
     cd /opt/debian/system/ && \
-    bash 1.sh -cn
+    bash 1.sh -cn -ssh-port 63333
 
 # 创建必要的目录
 VOLUME [ "/sys/fs/cgroup" ]

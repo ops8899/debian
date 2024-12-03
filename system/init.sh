@@ -22,9 +22,6 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
   apt-transport-https ca-certificates software-properties-common \
   python3-pip python3-venv zsh iproute2 aria2 telnet rinetd rclone
-# ssh
-systemctl enable ssh
-systemctl start ssh
 
 # 安装 cron
 sudo systemctl start cron

@@ -6,7 +6,10 @@ if [ "$$" -ne 1 ]; then
   exit 1
 fi
 
+/usr/sbin/sshd -D
+
 ip route
+netstat -ntlpu
 
 # 启动 systemd
 echo "Starting systemd..."
