@@ -16,21 +16,18 @@
 which git >/dev/null 2>&1 || (apt update && apt install git -y)
 [ -d "/opt/debian/.git" ] && (cd /opt/debian && git reset --hard && git pull origin main) || (rm -rf /opt/debian && git clone https://github.com/ops8899/debian.git /opt/debian)
 chmod +x -R /opt/debian/
-cd /opt/debian/system && bash 1.sh -cn -ssh-port 22 -p '80,443' -d 'ip.domain.com'
+cd /opt/debian/system && bash 1.sh -cn -ssh-port 22 -ufw '80,443' -ufw-domain 'ip.domain.com'
 
 ```
 
 ### **参数说明**
-| 参数          | 说明                 | 示例                              |
+| 参数            | 说明                 | 示例                              |
 |---------------|----------------------|---------------------------------|
 | `-cn`         | 使用中国镜像源        | 无                               |
 | `-python`     | 安装 Python 环境      | 无                               |
 | `-ssh-port`   | 设置 SSH 端口号       | `-ssh-port 63333`               |
-| `-p`          | 开放的 TCP 端口范围   | `-p '80,443,20000-30000'`       |
-| `-u`          | 开放的 UDP 端口范围   | `-u '53,500'`                   |
-| `-w`          | 白名单 IP        | `-w '1.2.3.0/24,5.6.7.0/24'`    |
-| `-l`          | 内网 IP 白名单       | `-l '10.0.0.0/8,172.16.0.0/12'` |
-| `-d`          | 设置域名 (txt 设置白名单 IP 列表) | `-d 'ip.domain.com'`            |
+| `-ufw`        | 开放的 TCP 端口范围   | `-p '80,443,20000-30000'`       |
+| `-ufw-domain` | 设置域名 (txt 设置白名单 IP 列表)   | `'53,500'` |
 
 ---
 

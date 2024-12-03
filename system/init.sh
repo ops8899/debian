@@ -21,7 +21,10 @@ apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
   traceroute dnsutils  iputils-ping \
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
   apt-transport-https ca-certificates software-properties-common \
-  python3-pip python3-venv zsh iproute2 aria2 telnet rinetd rclone
+  python3-pip zsh iproute2 aria2 telnet rclone
+
+# 更新证书
+update-ca-certificates
 # ssh
 systemctl enable ssh
 systemctl start ssh

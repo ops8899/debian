@@ -4,37 +4,28 @@ export DEBIAN_FRONTEND=noninteractive
 
 # 默认值
 CN_MODE=false
-PYTHON=false
+PYTHON_ENV=false
 SSH_PORT=22
-TCP_PORTS=""
-UDP_PORTS=""
-WHITELIST_IPS=""
-DIG_DOMAIN=""
-LAN_IPS=""
+UFW=""
 
 # 参数解析
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -cn|--china-mode) CN_MODE=true; shift ;;                     # 启用中国模式
-        -python|--enable-python) PYTHON=true; shift ;;               # 启用 Python
-        -ssh-port|--ssh-port) SSH_PORT="$2"; shift 2 ;;              # SSH 端口
-        -p|--tcp) TCP_PORTS="$2"; shift 2 ;;                         # UFW TCP 端口
-        -u|--udp) UDP_PORTS="$2"; shift 2 ;;                         # UFW UDP 端口
-        -w|--white-ips) WHITELIST_IPS="$2"; shift 2 ;;               # UFW 白名单 IP 列表
-        -d|--domain) DIG_DOMAIN="$2"; shift 2 ;;                     # UFW DIG 域名
-        -l|--lan-ips) LAN_IPS="$2"; shift 2 ;;                       # 内网 IP 范围
-        *) echo "未知选项: $1"; exit 1 ;;                            # 未知参数处理
+        -cn) CN_MODE=true; shift ;;                 # 启用中国模式
+        -python) PYTHON_ENV=true; shift ;;              # 启用 Python
+        -ssh-port) SSH_PORT="$2"; shift 2 ;;        # SSH 端口
+        -ufw) UFW="$2"; shift 2 ;;              # UFW 规则
+        -ufw-domain) UFW_DOMAIN="$2"; shift 2 ;;       # UFW DIG 域名
+        *) echo "未知选项: $1"; exit 1 ;;             # 未知参数处理
     esac
 done
 
 # 输出参数值（调试用）
 echo "是否启用中国模式：$CN_MODE"
-echo "是否启用 Python 环境安装：$PYTHON"
+echo "是否启用 Python 环境安装：$PYTHON_ENV"
 echo "SSH 端口：$SSH_PORT"
-echo "UFW TCP 端口：$TCP_PORTS"
-echo "UFW UDP 端口：$UDP_PORTS"
-echo "UFW 白名单 IP 列表：$WHITELIST_IPS"
-echo "UFW DIG域名：$DIG_DOMAIN"
+echo "UFW 参数：$UFW"
+echo "UFW txt域名：$UFW_DOMAIN"
 echo "内网 IP 范围：$LAN_IPS"
 
 # 根据 CN_MODE 调用不同的 apt 脚本
@@ -58,7 +49,7 @@ bash vim.sh
 # ssh
 bash ssh.sh "$SSH_PORT"
 # python
-if [ "$PYTHON" = true ]; then
+if [ "$PYTHON_ENV" = true ]; then
   bash py3.sh
 fi
 # zsh
@@ -66,9 +57,9 @@ bash zsh.sh
 
 # ufw
 # 检查参数是否有值
-if [[ -n "$TCP_PORTS" || -n "$UDP_PORTS" || -n "$WHITELIST_IPS" || -n "$DIG_DOMAIN" || -n "$LAN_IPS" ]]; then
+if [[ -n "$UFW" || -n "$UFW_DOMAIN" ]]; then
     echo "执行 ufw_set 命令..."
-    ufw_set -p "$TCP_PORTS" -u "$UDP_PORTS" -w "$WHITELIST_IPS" -d "$DIG_DOMAIN" -l "$LAN_IPS"
+    ufw_set $UFW -txt "$UFW_DOMAIN"
 else
     echo "未提供任何参数，跳过 ufw_set 执行。"
 fi

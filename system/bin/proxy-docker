@@ -3,8 +3,8 @@
 # 如果没有参数，显示使用说明
 if [ -z "$1" ]; then
     echo "用法："
-    echo "  设置代理: proxy_docker '代理地址'"
-    echo "  清除代理: proxy_docker remove"
+    echo "  设置代理: proxy-docker '代理地址'"
+    echo "  清除代理: proxy-docker remove"
     exit 1
 fi
 

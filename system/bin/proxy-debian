@@ -3,8 +3,8 @@
 # 如果没有参数，显示使用说明
 if [ -z "$1" ]; then
     echo "用法："
-    echo "  设置代理: proxy_debian '代理地址'"
-    echo "  清除代理: proxy_debian remove"
+    echo "  设置代理: proxy-debian '代理地址'"
+    echo "  清除代理: proxy-debian remove"
     echo ""
     echo "代理地址格式示例："
     echo "  socks5://用户名:密码@IP:端口"
