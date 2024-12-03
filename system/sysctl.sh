@@ -28,12 +28,6 @@ set_sysctl_param() {
 configure_limits() {
     local limits_file="/etc/security/limits.conf"
 
-    # 备份原始文件
-    if [ ! -f "${limits_file}.bak" ]; then
-        echo "备份 ${limits_file} 到 ${limits_file}.bak"
-        sudo cp "$limits_file" "${limits_file}.bak"
-    fi
-
     echo "配置系统限制..."
 
     # 创建临时文件
@@ -131,7 +125,7 @@ done
 
 # 应用 sysctl 更改
 echo "应用系统参数更改..."
-sudo sysctl -p
+sysctl -p
 
 # 检查 BBR 状态
 echo "检查 BBR 状态..."
@@ -147,8 +141,9 @@ if ! grep -q "session required pam_limits.so" /etc/pam.d/common-session-noninter
     echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session-noninteractive > /dev/null
 fi
 
-echo "系统优化完成。建议重启系统以使所有更改生效。"
-
 # 显示当前系统限制
 echo "当前系统限制状态："
 ulimit -a
+
+echo "系统优化完成。"
+

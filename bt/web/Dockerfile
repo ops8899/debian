@@ -1,25 +1,30 @@
-# 使用 Debian 12 slim 作为基础镜像
-FROM debian:12-slim
+# 使用官方 Debian 12 基础镜像
+FROM debian:12
 
-# 设置环境变量以避免交互式提示
+# 设置环境变量以避免交互式安装
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 更新包管理器，安装所需的包
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        git ca-certificates && \
-    update-ca-certificates
+# 更新包管理器并安装 systemd 和相关依赖
+RUN apt-get update && apt-get install -y \
+    systemd systemd-sysv dbus git ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY copyables/entrypoint.sh /root/
+# 克隆 Git 仓库并执行脚本
+RUN git clone https://github.com/ops8899/debian.git /opt/debian && \
+    chmod +x -R /opt/debian/system/ && \
+    cd /opt/debian/system/ && \
+    bash 1.sh -cn
 
-# 安装基础
-RUN chmod +x /root/*.sh && \
-    git clone https://github.com/ops8899/debian.git /opt/debian && \
-    chmod +x -R /opt/debian/ && \
-    cd /opt/debian/system && \
-    bash 1.sh
+# 创建必要的目录
+VOLUME [ "/sys/fs/cgroup" ]
 
-RUN cd /tmp && curl -sSO http://v920.hostcli.com/install/install_6.0.sh;echo 'yes'|bash install_6.0.sh
+# 添加自定义的 entrypoint 脚本
+COPY copyables/ /root/
+RUN chmod +x /root/entrypoint.sh
 
-# 设置入口点为 entrypoint 脚本
+# 设置 entrypoint
 ENTRYPOINT ["/root/entrypoint.sh"]
+
+# 默认不传递额外参数
+CMD []

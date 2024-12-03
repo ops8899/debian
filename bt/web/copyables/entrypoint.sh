@@ -1,4 +1,13 @@
 #!/bin/bash
-while true; do
-  sleep 10
-done
+
+# 检查是否是 PID 1 进程
+if [ "$$" -ne 1 ]; then
+  echo "This script must be run as PID 1 (inside the container)."
+  exit 1
+fi
+
+ip route
+
+# 启动 systemd
+echo "Starting systemd..."
+exec /lib/systemd/systemd
