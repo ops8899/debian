@@ -1,0 +1,9 @@
+#!/bin/bash
+
+DOCKER_USERNAME=${1:-$DOCKER_USERNAME}
+DOCKER_TOKEN=${2:-$DOCKER_TOKEN}
+
+[ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ] && echo "请提供用户名和令牌，或设置 DOCKER_USERNAME 和 DOCKER_TOKEN 环境变量" && exit 1
+
+echo $DOCKER_TOKEN | docker login -u $DOCKER_USERNAME --password-stdin
+
