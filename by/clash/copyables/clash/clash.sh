@@ -83,9 +83,9 @@ if [ ! -f "$CLASH_CONFIG" ]; then
         else
             download_region_config "download" "" "" "$clash_url"
         fi
-
-        cp "$CLASH_DIR/$clash_config" "$CLASH_CONFIG"
     fi
+
+    cp "$CLASH_DIR/$clash_config" "$CLASH_CONFIG"
 fi
 
 # 检查是否存在 proxies.yaml

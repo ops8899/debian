@@ -8,8 +8,6 @@ sed -i "s|VPN_USER2|$vpn_user2|g" /usr/local/vpnserver/vpn_server.config
 
 # 需要标记的端口
 PORTS=(
-    1080  # SOCKS5 代理端口
-    1081  # 备用代理端口
     1194 # VPN 主端口
 )
 echo "=== 添加端口规则 ==="

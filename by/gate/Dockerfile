@@ -61,8 +61,8 @@ EXPOSE 443/tcp 992/tcp 1194/tcp 1194/udp 5555/tcp
 ENV proxy_username="hi" proxy_password="Hi8899"
 
 # 设置 OpenVPN 客户端的配置
-ENV client_config="" client_username="" client_password="" client_proxy='' client_param=''
-
+ENV client_config="" client_username="" client_password="" client_param=''
+ENV client_proxy='' client_socks_proxy='' client_http_proxy=''
 # VPN的客户端DHCP
 ENV vpn_user1="vpn_user1" vpn_user2="vpn_user2" vpn_dhcp="192.168.30"
 

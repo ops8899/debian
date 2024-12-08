@@ -15,9 +15,9 @@
 ```bash
 which git >/dev/null 2>&1 || (apt update && apt install git -y)
 rm -rf /opt/debian && cd /
-git clone https://github.com/ops8899/debian.git /opt/debian
-chmod +x -R /opt/debian/
-cd /opt/debian/system
+git clone https://github.com/ops8899/debian.git /debian
+chmod +x -R /debian/
+cd /debian/system
 bash 1.sh -ssh-port 22 -cn  -ufw '80,443' -ufw-domain 'ip.domain.com'
 
 ```
