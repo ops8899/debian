@@ -36,3 +36,5 @@ check_and_add_rule "$vpn_dhcp.0/24" "$openvpn_interface"
 
 check_and_add_rule "$c_segment.0/24" "eth0"
 check_and_add_rule "$c_segment.0/24" "$openvpn_interface"
+
+bash /root/3proxy/3proxy.sh

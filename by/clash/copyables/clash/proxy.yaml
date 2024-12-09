@@ -13,6 +13,10 @@ mode: rule
 log-level: info
 external-controller: 0.0.0.0:80
 external-controller-tls: 0.0.0.0:443
+external-controller-cors:
+  allow-origins:
+    - "*"
+  allow-private-network: true
 # secret: 123456
 external-ui: /ui
 geox-url:
@@ -77,14 +81,16 @@ proxy-providers:
     health-check:
       enable: true
       url: http://www.gstatic.com/generate_204
-      interval: 10  # 每 10 秒测速一次
-      tolerance: 50 # 容忍延迟波动范围（单位：毫秒）
-      lazy: true    # 开启懒加载，减少资源占用
+      interval: 300  # 每 300 秒测速一次
+      max-failed-times: 2
+      expected-status: 204
 proxy-groups:
   - name: group_default
     type: url-test
     url: http://www.gstatic.com/generate_204
-    interval: 30
+    interval: 300
+    max-failed-times: 2
+    expected-status: 204
     use:
       - provider1
 rules:
@@ -102,6 +108,8 @@ rules:
   # 内网
   - DOMAIN-SUFFIX,ip6-localhost,DIRECT
   - DOMAIN-SUFFIX,ip6-loopback,DIRECT
+  - IP-CIDR,223.6.6.6/32,DIRECT
+  - IP-CIDR,114.114.115.115/32,DIRECT
   - DOMAIN-SUFFIX,lan,DIRECT
   - DOMAIN-SUFFIX,local,DIRECT
   - DOMAIN-SUFFIX,localhost,DIRECT

@@ -16,7 +16,7 @@ apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
 
 # 安装常用工具和软件，使用选项来避免交互
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-  sudo openssh-server systemd systemd-sysv cron logrotate \
+  sudo ntpdate openssh-server systemd systemd-sysv cron logrotate \
   net-tools vnstat tcpdump nmap netcat-openbsd isc-dhcp-client iftop wget curl htop vim lsof unzip zip psmisc git ufw rsync \
   traceroute dnsutils  iputils-ping \
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
@@ -36,6 +36,9 @@ systemctl start ssh
 # 安装 cron
 sudo systemctl start cron
 sudo systemctl enable cron
+
+# 更新时间
+ntpdate -u pool.ntp.org && (crontab -l 2>/dev/null; echo "0 * * * * /usr/sbin/ntpdate -u pool.ntp.org") | crontab -
 
 # 设置 dns
 cat <<EOF | sudo tee /etc/resolv.conf >/dev/null

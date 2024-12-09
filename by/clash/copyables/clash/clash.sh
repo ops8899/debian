@@ -83,20 +83,26 @@ if [ ! -f "$CLASH_CONFIG" ]; then
         else
             download_region_config "download" "" "" "$clash_url"
         fi
+
+        # 检查是否存在 proxies.yaml
+        if [ ! -f "$CLASH_DIR/proxies_default.yaml" ]; then
+            echo "错误：未找到 proxies_default.yaml 文件，退出程序"
+            exit 1
+        fi
+
+        # 检查文件中是否包含有效的代理节点配置
+        if ! grep -q "^[[:space:]]*-[[:space:]]*{.*name:.*server:.*port:.*type:" "$CLASH_DIR/proxies_default.yaml"; then
+            echo "错误：proxies_default.yaml 文件中未找到有效的代理节点配置，退出程序"
+            exit 1
+        fi
     fi
 
     cp "$CLASH_DIR/$clash_config" "$CLASH_CONFIG"
 fi
 
 # 检查是否存在 proxies.yaml
-if [ ! -f "$CLASH_DIR/proxies_default.yaml" ]; then
-    echo "错误：未找到 proxies_default.yaml 文件，退出程序"
-    exit 1
-fi
-
-# 检查文件中是否包含有效的代理节点配置
-if ! grep -q "^[[:space:]]*-[[:space:]]*{.*name:.*server:.*port:.*type:" "$CLASH_DIR/proxies_default.yaml"; then
-    echo "错误：proxies_default.yaml 文件中未找到有效的代理节点配置，退出程序"
+if [ ! -f "$CLASH_CONFIG" ]; then
+    echo "错误：未找到 $CLASH_CONFIG 文件，退出程序"
     exit 1
 fi
 

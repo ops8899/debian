@@ -58,9 +58,13 @@ echo 'dinfo() { [ $# -eq 0 ] && echo "用法: dinfo 容器名" && return 1; dock
 sed -i '/dim()/d' ~/.bashrc
 echo 'dim() { if [ $# -eq 0 ]; then docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"; else docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -i "$1"; fi; }' >> ~/.bashrc
 
+# 停止容器
+sed -i '/^dstop()/,/^}/d' ~/.bashrc
+echo 'dstop() { [ $# -eq 0 ] && echo "用法: dstop 容器名1 [容器名2 ...]" && return 1; echo "将要停止容器: $*"; printf "确认停止? [y/N] "; read r; [[ $r =~ ^[Yy]$ ]] && for c in "$@"; do docker ps --format "{{.Names}}" | grep -q "^$c$" && docker stop "$c" && echo "已停止 $c" || echo "容器 $c 未运行或不存在，跳过。"; done; }' >> ~/.bashrc
+
 # 一键停止所有容器
-sed -i '/dstop()/d' ~/.bashrc
-echo 'dstop() { echo "将停止所有运行中的容器"; printf "确认停止? [y/N] "; read r; [[ $r =~ ^[Yy]$ ]] && docker stop $(docker ps -q) && echo "已停止所有容器"; }' >> ~/.bashrc
+sed -i '/^dstop-all()/,/^}/d' ~/.bashrc
+echo 'dstop-all() { [ $(docker ps -q | wc -l) -eq 0 ] && echo "没有正在运行的容器" && return 1; echo "将停止所有运行中的容器"; printf "确认停止? [y/N] "; read r; [[ $r =~ ^[Yy]$ ]] && docker stop -t 0 $(docker ps -q) && echo "已停止所有容器"; }' >> ~/.bashrc
 
 # 进入容器执行命令
 sed -i '/dexec()/d' ~/.bashrc
