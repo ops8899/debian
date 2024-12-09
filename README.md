@@ -14,7 +14,7 @@
 ### **命令**
 ```bash
 which git >/dev/null 2>&1 || (apt update && apt install git -y)
-rm -rf /opt/debian && cd /
+rm -rf /debian && cd /
 git clone https://github.com/ops8899/debian.git /debian
 chmod +x -R /debian/
 cd /debian/system
