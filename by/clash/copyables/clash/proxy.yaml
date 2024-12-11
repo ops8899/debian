@@ -1,0 +1,127 @@
+port: 7890
+socks-port: 7891
+authentication:
+  - "proxy_username:proxy_password"
+skip-auth-prefixes:
+  - 127.0.0.1/8
+  - 10.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+  - ::1/128
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:80
+external-controller-tls: 0.0.0.0:443
+external-controller-cors:
+  allow-origins:
+    - "*"
+  allow-private-network: true
+# secret: 123456
+external-ui: /ui
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.metadb"
+geo-auto-update: false
+geo-update-interval: 24
+global-client-fingerprint: chrome
+
+profile:
+  store-selected: false
+  store-fake-ip: true
+
+tun:
+  enable: false
+  stack: system
+  dns-hijack:
+    - 0.0.0.0:53
+
+dns:
+  enable: true
+  ipv6: false
+  listen: 0.0.0.0:53
+  # 默认DNS服务器 (用于解析普通域名)
+  nameserver:
+    - 1.0.0.1
+    - 8.8.4.4
+    - 114.114.115.115
+    - 223.6.6.6
+  # DNS 匹配规则
+  enhanced-mode: fake-ip  # 或者 redir-host
+  fake-ip-range: 198.18.0.1/16    # fake-ip 地址池
+  use-hosts: true        # 启用 hosts
+  # 用于解析国外域名
+  fallback:
+    - https://dns.google/dns-query    # Google DoH
+    - https://doh.dns.sb/dns-query
+    - https://dns.cloudflare.com/dns-query
+    - https://dns.twnic.tw/dns-query
+    - tls://208.67.222.222:853
+  # 优化设置
+  default-nameserver: # 用于解析 nameserver 中的 DNS 服务器地址
+    - 223.6.6.6
+    - 149.112.112.112
+  # 域名匹配规则
+  fallback-filter:
+    geoip: true         # 启用 geoip
+    geoip-code: CN      # 中国大陆 IP 不使用 fallback
+    ipcidr: # 指定 IP 段不使用 fallback
+      - 240.0.0.0/4
+      - 0.0.0.0/32
+    domain: # 指定域名使用 fallback
+      - '+.google.com'
+      - '+.facebook.com'
+      - '+.youtube.com'
+      - '+.github.com'
+proxy-providers:
+  provider1:
+    type: file
+    path: ./proxies_default.yaml
+    health-check:
+      enable: true
+      url: http://www.gstatic.com/generate_204
+      interval: 300  # 每 300 秒测速一次
+      max-failed-times: 2
+      expected-status: 204
+proxy-groups:
+  - name: group_default
+    type: url-test
+    url: http://www.gstatic.com/generate_204
+    interval: 300
+    max-failed-times: 2
+    expected-status: 204
+    use:
+      - provider1
+rules:
+  # DNS 查询规则
+  - DOMAIN-SUFFIX,dns.google,group_default
+  - DOMAIN-SUFFIX,dns.sb,group_default
+  - DOMAIN-SUFFIX,cloudflare.com,group_default
+  - DOMAIN-SUFFIX,twnic.tw,group_default
+  # 确保 DoH/DoT 服务器的 IP 走代理
+  - IP-CIDR,8.8.4.4/32,group_default
+  - IP-CIDR,1.0.0.1/32,group_default
+  - IP-CIDR,149.112.112.112/32,group_default
+  - IP-CIDR,208.67.222.222/32,group_default
+  - IP-CIDR,198.18.0.1/16,REJECT,no-resolve
+  # 内网
+  - DOMAIN-SUFFIX,ip6-localhost,DIRECT
+  - DOMAIN-SUFFIX,ip6-loopback,DIRECT
+  - IP-CIDR,223.6.6.6/32,DIRECT
+  - IP-CIDR,114.114.115.115/32,DIRECT
+  - DOMAIN-SUFFIX,lan,DIRECT
+  - DOMAIN-SUFFIX,local,DIRECT
+  - DOMAIN-SUFFIX,localhost,DIRECT
+  - IP-CIDR,0.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,10.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,100.64.0.0/10,DIRECT,no-resolve
+  - IP-CIDR,127.0.0.0/8,DIRECT,no-resolve
+  - IP-CIDR,172.16.0.0/12,DIRECT,no-resolve
+  - IP-CIDR,192.168.0.0/16,DIRECT,no-resolve
+  - IP-CIDR,224.0.0.0/4,DIRECT,no-resolve
+  - IP-CIDR6,::1/128,DIRECT,no-resolve
+  - IP-CIDR6,fc00::/7,DIRECT,no-resolve
+  - IP-CIDR6,fe80::/10,DIRECT,no-resolve
+  - IP-CIDR6,fd00::/8,DIRECT,no-resolve
+  - MATCH,group_default
