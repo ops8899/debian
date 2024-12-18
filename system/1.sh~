@@ -57,7 +57,7 @@ if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
   echo "当前在容器中运行，跳过执行。"
 else
   echo "当前不是容器，执行 docker-init..."
-  bash docker.sh
+  bash docker-init
 fi
 # zsh
 bash zsh.sh

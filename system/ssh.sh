@@ -44,7 +44,8 @@ declare -A ssh_params=(
   ["X11Forwarding"]="no"
   ["MaxAuthTries"]="3"
   ["Protocol"]="2"
-  # ["PermitRootLogin"]="no" # 可根据需要启用
+  ["PermitRootLogin"]="yes"  # 允许 root 登录
+  ["MaxSessions"]="20"       # 设置最大会话数为 20
 )
 
 # 设置 SSH 参数
