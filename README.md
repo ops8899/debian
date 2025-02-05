@@ -13,6 +13,13 @@
 
 ### **命令**
 ```bash
+
+proxy="http://hi:Hi8899@122.114.8.9:21080" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
+
+unset http_proxy https_proxy && sudo rm /etc/apt/apt.conf.d/proxy.conf
+
+
+
 which git >/dev/null 2>&1 || (apt update && apt install git -y)
 rm -rf /debian && cd /
 git clone https://github.com/ops8899/debian.git /debian
