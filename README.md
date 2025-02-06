@@ -16,9 +16,27 @@
 
 proxy="http://hi:Hi8899@122.114.8.9:21080" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
 
+proxy="http://hi:Hi8899@110.42.103.131:21080" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
+
 unset http_proxy https_proxy && sudo rm /etc/apt/apt.conf.d/proxy.conf
 
+proxy-docker socks5://hi:Hi8899@110.42.103.131:21081
 
+
+MIRROR="mirrors.aliyun.com"
+SOURCES="/etc/apt/sources.list"
+
+# 备份并生成新源
+cp $SOURCES ${SOURCES}.bak
+cat > $SOURCES << EOF
+deb http://${MIRROR}/debian/ bookworm main contrib non-free non-free-firmware
+deb http://${MIRROR}/debian/ bookworm-updates main contrib non-free non-free-firmware
+deb http://${MIRROR}/debian/ bookworm-backports main contrib non-free non-free-firmware
+deb http://${MIRROR}/debian-security bookworm-security main contrib non-free non-free-firmware
+EOF
+
+# 更新系统
+apt-get update -q && apt-get dist-upgrade -y
 
 which git >/dev/null 2>&1 || (apt update && apt install git -y)
 rm -rf /debian && cd /

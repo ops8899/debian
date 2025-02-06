@@ -42,10 +42,10 @@ ntpdate -u pool.ntp.org && (crontab -l 2>/dev/null; echo "0 * * * * /usr/sbin/nt
 
 # 设置 dns
 cat <<EOF | sudo tee /etc/resolv.conf >/dev/null
-nameserver 1.1.1.1
-nameserver 8.8.8.8
 nameserver 114.114.114.114
 nameserver 223.5.5.5
+nameserver 1.1.1.1
+nameserver 8.8.8.8
 EOF
 
 # 设置时区为香港
