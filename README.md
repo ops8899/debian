@@ -17,10 +17,18 @@
 proxy="http://hi:Hi8899@122.114.8.9:21080" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
 
 proxy="http://hi:Hi8899@110.42.103.131:21080" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
+proxy="http://hi:Hi8899@112.5.37.173:55520" && export http_proxy=$proxy https_proxy=$proxy && echo "Acquire::http::Proxy \"$proxy\";\nAcquire::https::Proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
 
 unset http_proxy https_proxy && sudo rm /etc/apt/apt.conf.d/proxy.conf
 
-proxy-docker socks5://hi:Hi8899@110.42.103.131:21081
+sed -i '/proxy1.1ke.net/d' /etc/hosts
+echo "110.42.103.131 proxy1.1ke.net" >> /etc/hosts
+proxy-docker socks5://hi:Hi8899@proxy1.1ke.net:21081
+
+
+
+proxy="socks5h://hi:Hi8899@110.42.103.131:21081" && export all_proxy=$proxy http_proxy=$proxy https_proxy=$proxy && echo "Acquire::socks::proxy \"$proxy\";" | tee /etc/apt/apt.conf.d/proxy.conf
+unset all_proxy http_proxy https_proxy && rm /etc/apt/apt.conf.d/proxy.conf
 
 
 MIRROR="mirrors.aliyun.com"
