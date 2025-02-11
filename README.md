@@ -43,6 +43,7 @@ deb http://${MIRROR}/debian/ bookworm-backports main contrib non-free non-free-f
 deb http://${MIRROR}/debian-security bookworm-security main contrib non-free non-free-firmware
 EOF
 
+export DEBIAN_FRONTEND=noninteractive
 # 更新系统
 apt-get update -q && apt-get dist-upgrade -y
 

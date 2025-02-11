@@ -17,3 +17,20 @@ mount -a
 df -h /data
 
 ```
+
+```shell
+# 扩容
+# https://www.cnblogs.com/jrri/p/16591351.html
+# 安装
+apt update;apt install -y cloud-utils cloud-initramfs-growroot
+# 扩容
+growpart /dev/vda 1
+# 查看扩容后的磁盘空间
+lsblk
+# 查看
+df -h
+# 调整
+resize2fs /dev/vda1
+
+
+```
