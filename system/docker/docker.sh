@@ -13,8 +13,9 @@ fi
 
 # 检查 Docker Compose 是否已安装
 if ! command -v docker-compose &> /dev/null; then
-    echo "Docker Compose 未安装，正在安装 Docker Compose..."
-    apt install -y docker-compose
+    echo "Docker Compose 未安装，正在安装 Docker Compose Plugin..."
+    apt update
+    apt install -y docker-compose-plugin
 else
     echo "Docker Compose 已安装，跳过安装步骤"
 fi
@@ -30,6 +31,10 @@ echo ""
 echo ""
 # 创建 Docker 网络
 docker network create -d bridge --gateway "172.18.0.1" --subnet "172.18.0.0/16" "local"
+
+# 验证 Docker 和 Compose 版本
+docker version
+docker compose version
 
 echo "======================="
 echo "  安装 Docker 完成"
