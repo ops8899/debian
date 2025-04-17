@@ -47,10 +47,6 @@ mv /var/lib/docker/* "$DOCKER_PATH/"
 # 更新Docker配置文件
 tee /etc/docker/daemon.json > /dev/null << EOF
 {
-  "exec-opts": [
-    "native.cgroupdriver=systemd"
-  ],
-  "live-restore": true,
   "log-driver": "json-file",
   "log-opts": {
     "max-file": "10",
