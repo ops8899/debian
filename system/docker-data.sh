@@ -38,14 +38,15 @@ sudo tee /etc/docker/daemon.json > /dev/null << EOF
     "max-size": "10m"
   },
   "registry-mirrors": [
-    "https://docker.1panel.live"
+    "https://docker.1panel.live",
+    "https://mirror.azure.cn"
   ],
   "data-root": "$DOCKER_PATH"
 }
 EOF
 
-# 设置权限
-sudo chown -R docker:docker "$DOCKER_PATH"
+# 设置权限（使用root）
+sudo chown -R root:root "$DOCKER_PATH"
 
 # 重启Docker服务
 sudo systemctl start docker
