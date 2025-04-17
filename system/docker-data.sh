@@ -17,16 +17,16 @@ if [[ $confirm != [yY] && $confirm != [yY][eE][sS] ]]; then
 fi
 
 # 停止Docker服务
-sudo systemctl stop docker
+systemctl stop docker
 
 # 创建目标目录
-sudo mkdir -p "$DOCKER_PATH"
+mkdir -p "$DOCKER_PATH"
 
 # 移动默认Docker数据
-sudo mv /var/lib/docker/* "$DOCKER_PATH/"
+mv /var/lib/docker/* "$DOCKER_PATH/"
 
 # 更新Docker配置文件
-sudo tee /etc/docker/daemon.json > /dev/null << EOF
+tee /etc/docker/daemon.json > /dev/null << EOF
 {
   "exec-opts": [
     "native.cgroupdriver=systemd"
@@ -46,10 +46,10 @@ sudo tee /etc/docker/daemon.json > /dev/null << EOF
 EOF
 
 # 设置权限（使用root）
-sudo chown -R root:root "$DOCKER_PATH"
+chown -R root:root "$DOCKER_PATH"
 
 # 重启Docker服务
-sudo systemctl start docker
+systemctl restart docker
 
 # 验证配置
 docker info
