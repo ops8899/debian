@@ -54,10 +54,10 @@ systemctl stop docker
 mkdir -p "$DOCKER_PATH"
 
 # 移动整个 docker 目录
-mv /var/lib/docker "$DOCKER_PATH/docker"
+mv /var/lib/docker "$DOCKER_PATH"
 
 # 创建软链接
-ln -s "$DOCKER_PATH/docker" /var/lib/docker
+ln -s "$DOCKER_PATH" /var/lib/docker
 
 # 设置权限（使用root）
 chown -R root:root "$DOCKER_PATH"
