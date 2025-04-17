@@ -38,7 +38,7 @@ sudo tee /etc/docker/daemon.json > /dev/null << EOF
     "max-size": "10m"
   },
   "registry-mirrors": [
-    "https://mirror.azure.cn",
+    "https://docker.1ms.run",
     "https://docker.1panel.live"
   ],
   "data-root": "$DOCKER_PATH"
