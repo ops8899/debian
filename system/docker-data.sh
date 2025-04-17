@@ -3,9 +3,28 @@
 # 默认路径
 DEFAULT_DOCKER_PATH="/data/docker"
 
+# 获取当前完整时间戳
+TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+
 # 提示用户输入新的Docker数据路径
 read -p "请输入新的Docker数据路径 (默认: $DEFAULT_DOCKER_PATH): " DOCKER_PATH
 DOCKER_PATH=${DOCKER_PATH:-$DEFAULT_DOCKER_PATH}
+
+# 检查目标目录是否已存在
+if [ -d "$DOCKER_PATH" ] && [ "$(ls -A "$DOCKER_PATH")" ]; then
+    echo "警告：目标目录 $DOCKER_PATH 已存在且不为空"
+    read -p "是否重命名原目录并继续？(y/n): " force_confirm
+
+    if [[ $force_confirm != [yY] && $force_confirm != [yY][eE][sS] ]]; then
+        echo "操作已取消"
+        exit 1
+    fi
+
+    # 重命名原目录
+    BACKUP_PATH="${DOCKER_PATH}_backup_${TIMESTAMP}"
+    mv "$DOCKER_PATH" "$BACKUP_PATH"
+    echo "原目录已重命名为：$BACKUP_PATH"
+fi
 
 # 确认路径
 echo "将使用路径: $DOCKER_PATH"
@@ -53,3 +72,5 @@ systemctl restart docker
 
 # 验证配置
 docker info
+
+echo "Docker数据目录迁移完成！"
