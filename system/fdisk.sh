@@ -1,4 +1,7 @@
 #!/bin/bash
+# 设置环境变量以抑制交互式提示
+export DEBIAN_FRONTEND=noninteractive
+
 
 # 检查是否为root
 if [[ $EUID -ne 0 ]]; then
@@ -6,9 +9,17 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# 安装必要工具
-apt update
-apt install -y parted fdisk dosfstools
+# 检查并安装缺失的工具
+TOOLS=("parted" "fdisk" "mkfs.ext4")
+PACKAGES=("parted" "fdisk" "dosfstools")
+
+for i in ${!TOOLS[@]}; do
+    if ! command -v ${TOOLS[i]} &> /dev/null; then
+        echo "正在安装 ${PACKAGES[i]}..."
+        apt update
+        apt install -y ${PACKAGES[i]}
+    fi
+done
 
 # 获取系统盘
 SYSTEM_DISK=$(df -h | grep '/$' | awk '{print $1}' | sed 's/[0-9]*$//')
