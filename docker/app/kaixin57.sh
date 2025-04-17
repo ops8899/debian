@@ -3,7 +3,7 @@
 container_name="web"
 image_name="ops8899/kaixin:57"
 
-docker pull $image_name
+docker pull --registry-mirror=https://docker.1ms.run $image_name
 
 
 # 删除旧的容器（如果存在）

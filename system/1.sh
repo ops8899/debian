@@ -11,7 +11,6 @@ UFW=""
 # 参数解析
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -cn) CN_MODE=true; shift ;;                 # 启用中国模式
         -python) PYTHON_ENV=true; shift ;;              # 启用 Python
         -ssh-port) SSH_PORT="$2"; shift 2 ;;        # SSH 端口
         -ufw) UFW="$2"; shift 2 ;;              # UFW 规则
@@ -21,19 +20,14 @@ while [[ $# -gt 0 ]]; do
 done
 
 # 输出参数值（调试用）
-echo "是否启用中国模式：$CN_MODE"
 echo "是否启用 Python 环境安装：$PYTHON_ENV"
 echo "SSH 端口：$SSH_PORT"
 echo "UFW 参数：$UFW"
 echo "UFW txt域名：$UFW_DOMAIN"
 echo "内网 IP 范围：$LAN_IPS"
 
-# 根据 CN_MODE 调用不同的 apt 脚本
-if [ "$CN_MODE" = true ]; then
-  bash apt.sh -cn
-else
-  bash apt.sh
-fi
+# apt
+bash apt.sh
 
 # 系统基础
 bash init.sh
