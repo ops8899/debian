@@ -52,13 +52,7 @@ bash ssh.sh "$SSH_PORT"
 if [ "$PYTHON_ENV" = true ]; then
   bash py3.sh
 fi
-# 检查是否在容器中运行
-if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
-  echo "当前在容器中运行，跳过执行。"
-else
-  echo "当前不是容器，执行 docker-init..."
-  bash docker.sh
-fi
+
 # zsh
 bash zsh.sh
 
