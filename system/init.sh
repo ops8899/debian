@@ -41,12 +41,12 @@ sudo systemctl enable cron
 ntpdate -u pool.ntp.org && (crontab -l 2>/dev/null; echo "0 * * * * /usr/sbin/ntpdate -u pool.ntp.org") | crontab -
 
 # 设置 dns
-cat <<EOF | sudo tee /etc/resolv.conf >/dev/null
-nameserver 114.114.114.114
-nameserver 223.5.5.5
-nameserver 1.1.1.1
-nameserver 8.8.8.8
-EOF
+#cat <<EOF | sudo tee /etc/resolv.conf >/dev/null
+#nameserver 114.114.114.114
+#nameserver 223.5.5.5
+#nameserver 1.1.1.1
+#nameserver 8.8.8.8
+#EOF
 
 # 设置时区为香港
 rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Hong_Kong /etc/localtime
