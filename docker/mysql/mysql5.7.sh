@@ -18,9 +18,7 @@ docker logs -f mysql1
 
 
 
-cd /debian/docker/mysql
-
-bash init5.7.sh
+cd /debian/docker/mysql && bash init5.7.sh
 
 # 参数优化
 docker exec mysql1 bash -c "/shell/op.sh"
