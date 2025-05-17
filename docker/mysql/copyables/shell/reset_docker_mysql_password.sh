@@ -45,14 +45,19 @@ USE mysql;
 UPDATE mysql.user SET authentication_string='' WHERE user='root';
 UPDATE mysql.user SET plugin='mysql_native_password' WHERE user='root';
 FLUSH PRIVILEGES;
+
 ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
 ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
 FLUSH PRIVILEGES;
--- 重置 cc 用户 (如果存在)
+
+-- 重置 cc@localhost 用户 (如果存在)
+CREATE USER IF NOT EXISTS 'cc'@'localhost' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
+ALTER USER 'cc'@'localhost' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO 'cc'@'localhost' WITH GRANT OPTION;
+
+-- 重置 cc@% 用户 (如果存在)
 CREATE USER IF NOT EXISTS 'cc'@'%' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
--- 如果用户已存在，更新密码
 ALTER USER 'cc'@'%' IDENTIFIED WITH mysql_native_password BY '${NEW_PASSWORD}';
--- 授予权限
 GRANT ALL PRIVILEGES ON *.* TO 'cc'@'%' WITH GRANT OPTION;
 
 -- 最后刷新权限

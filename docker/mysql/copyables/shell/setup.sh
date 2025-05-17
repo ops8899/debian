@@ -60,10 +60,16 @@ USE mysql;
 CREATE TEMPORARY TABLE temp_table (id INT);
 DROP TEMPORARY TABLE temp_table;
 
+-- 创建 cc@'localhost' 用户（如果不存在）
+CREATE USER IF NOT EXISTS 'cc'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+-- 授予权限
+GRANT ALL PRIVILEGES ON *.* TO 'cc'@'localhost' WITH GRANT OPTION;
+
 -- 创建 cc@'%' 用户（如果不存在）
 CREATE USER IF NOT EXISTS 'cc'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 -- 授予权限
 GRANT ALL PRIVILEGES ON *.* TO 'cc'@'%' WITH GRANT OPTION;
+
 FLUSH PRIVILEGES;
 
 -- 禁用 root 用户
