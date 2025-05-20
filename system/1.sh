@@ -26,6 +26,9 @@ echo "UFW 参数：$UFW"
 echo "UFW txt域名：$UFW_DOMAIN"
 echo "内网 IP 范围：$LAN_IPS"
 
+# ssh
+bash ssh.sh "$SSH_PORT"
+
 # apt
 bash apt.sh
 
@@ -40,8 +43,6 @@ bash rc.local.sh
 bash bashrc.sh
 # vim
 bash vim.sh
-# ssh
-bash ssh.sh "$SSH_PORT"
 # python
 if [ "$PYTHON_ENV" = true ]; then
   bash py3.sh
