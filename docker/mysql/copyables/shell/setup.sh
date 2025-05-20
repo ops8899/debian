@@ -16,12 +16,11 @@ EOF
 
 # 更新并安装必要的工具
 apt-get update --allow-insecure-repositories && apt-get install -y --allow-unauthenticated \
-    bit \
     bash \
     iputils-ping \
     net-tools \
     procps \
-    vim curl wget \
+    vim curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 随机生成密码函数
@@ -35,6 +34,35 @@ bash /shell/generate_server_id.sh
 # 生成 root 用户配置
 bash /shell/generate_root_conf.sh
 
+# 创建 cc@'%' 用户
+echo "创建 cc 用户并授予远程访问权限..."
+mysql <<EOF
+-- 选择 mysql 数据库
+USE mysql;
+-- 创建一个临时表（DDL 操作会触发 GTID）
+CREATE TEMPORARY TABLE temp_table (id INT);
+DROP TEMPORARY TABLE temp_table;
+
+CREATE USER IF NOT EXISTS 'cc'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO 'cc'@'localhost' WITH GRANT OPTION;
+
+CREATE USER IF NOT EXISTS 'cc'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO 'cc'@'%' WITH GRANT OPTION;
+
+FLUSH PRIVILEGES;
+EOF
+
+echo "禁用 root 用户..."
+mysql <<EOF
+ALTER USER 'root'@'localhost' ACCOUNT LOCK;
+ALTER USER 'root'@'%' ACCOUNT LOCK;
+FLUSH PRIVILEGES;
+EOF
+
+# 生成 MySQL 客户端配置
+bash /shell/generate_client_conf.sh
+
+
 # 配置文件路径
 CONFIG_FILE_REPL="/etc/mysql/repl.conf"
 
@@ -47,42 +75,9 @@ MYSQL_REPLICATION_USER=$MYSQL_REPLICATION_USER
 MYSQL_REPLICATION_PASSWORD=$MYSQL_REPLICATION_PASSWORD
 EOF
 
-chmod 600 "$CONFIG_FILE"
-echo "密码已保存到 $CONFIG_FILE"
+chmod 600 "$CONFIG_FILE_REPL"
+echo "密码已保存到 $CONFIG_FILE_REPL"
 
-
-# 创建 root@'%' 用户
-echo "创建 root 用户并授予远程访问权限..."
-mysql <<EOF
--- 选择 mysql 数据库
-USE mysql;
--- 创建一个临时表（DDL 操作会触发 GTID）
-CREATE TEMPORARY TABLE temp_table (id INT);
-DROP TEMPORARY TABLE temp_table;
-
--- 创建 cc@'localhost' 用户（如果不存在）
-CREATE USER IF NOT EXISTS 'cc'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
--- 授予权限
-GRANT ALL PRIVILEGES ON *.* TO 'cc'@'localhost' WITH GRANT OPTION;
-
--- 创建 cc@'%' 用户（如果不存在）
-CREATE USER IF NOT EXISTS 'cc'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
--- 授予权限
-GRANT ALL PRIVILEGES ON *.* TO 'cc'@'%' WITH GRANT OPTION;
-
-FLUSH PRIVILEGES;
-EOF
-
-mysql <<EOF
--- 禁用 root 用户
--- 锁定账户
-ALTER USER 'root'@'localhost' ACCOUNT LOCK;
-ALTER USER 'root'@'%' ACCOUNT LOCK;
-
-EOF
-
-# 生成 MySQL 客户端配置
-bash /shell/generate_client_conf.sh
 
 # 创建 replication 用户
 echo "创建复制用户: $MYSQL_REPLICATION_USER"

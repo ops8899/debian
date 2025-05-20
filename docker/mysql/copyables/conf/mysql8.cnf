@@ -22,6 +22,12 @@ tls_version = TLSv1.2,TLSv1.3
 gtid-mode = ON
 enforce-gtid-consistency = 1
 
+# 8.0.23 及之后使用
+replica_compressed_protocol=1
+
+# 指定压缩算法，可选值包括：zlib, zstd, uncompressed
+compression_algorithms=zstd
+
 # ---------- Binlog配置 ----------
 log_bin = mysql-bin
 binlog_format = ROW
