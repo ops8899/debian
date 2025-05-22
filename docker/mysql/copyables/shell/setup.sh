@@ -2,25 +2,14 @@
 # 不交互
 export DEBIAN_FRONTEND=noninteractive
 
-# 重设源地址
-MIRROR="mirrors.aliyun.com"
-SOURCES="/etc/apt/sources.list"
-
-cp $SOURCES ${SOURCES}.bak
-cat > $SOURCES << EOF
-deb http://${MIRROR}/debian/ bookworm main contrib non-free non-free-firmware
-deb http://${MIRROR}/debian/ bookworm-updates main contrib non-free non-free-firmware
-deb http://${MIRROR}/debian/ bookworm-backports main contrib non-free non-free-firmware
-deb http://${MIRROR}/debian-security bookworm-security main contrib non-free non-free-firmware
-EOF
-
 # 更新并安装必要的工具
 apt-get update --allow-insecure-repositories && apt-get install -y --allow-unauthenticated \
     bash \
     iputils-ping \
     net-tools \
     procps \
-    vim curl \
+    vim \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 随机生成密码函数
@@ -89,9 +78,11 @@ FLUSH PRIVILEGES;
 EOF
 
 echo "MySQL 配置已完成！"
-echo "root 密码和 replication 用户名、密码已保存到 $CONFIG_FILE"
+echo "root 密码和 replication 用户名、密码已保存到 /etc/mysql/root.conf /etc/mysql/repl.conf"
 
 echo "MySQL Master 状态:"
 mysql <<EOF
 show master status\G;
 EOF
+
+sleep 3

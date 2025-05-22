@@ -6,16 +6,26 @@ generate_password() {
 
 MYSQL_PASSWORD=$(generate_password)
 
-# 提示用户输入容器名称
-read -p "请输入 要恢复 ROOT 密码 的MySQL 容器名称（默认: mysql1）: " CONTAINER_NAME
-CONTAINER_NAME=${CONTAINER_NAME:-mysql1} # 使用用户输入的值，或默认值 mysql8
+# 如果有传参就直接使用第1个参数作为容器名称，否则提示用户输入
+if [ $# -ge 1 ]; then
+    CONTAINER_NAME=$1
+else
+  # 提示用户输入容器名称
+  read -p "请输入 要恢复 ROOT 密码 的MySQL 容器名称（默认: mysql1）: " CONTAINER_NAME
+  CONTAINER_NAME=${CONTAINER_NAME:-mysql1} # 使用用户输入的值，或默认值 mysql1
+fi
 
-# 提示用户输入新密码
-read -p "请输入 root 用户的新密码（默认: $MYSQL_PASSWORD）: " NEW_PASSWORD
-NEW_PASSWORD=${NEW_PASSWORD:-$MYSQL_PASSWORD} # 使用用户输入的值，或默认值 $MYSQL_PASSWORD
+# 如果有传参就直接使用第1个参数作为容器名称，否则提示用户输入
+if [ $# -ge 2 ]; then
+    NEW_PASSWORD=$2
+else
+  # 提示用户输入新密码
+  read -p "请输入 root 用户的新密码（默认: $MYSQL_PASSWORD）: " NEW_PASSWORD
+  NEW_PASSWORD=${NEW_PASSWORD:-$MYSQL_PASSWORD} # 使用用户输入的值，或默认值 $MYSQL_PASSWORD
+fi
 
 # 定义其他必要变量
-HOST_CONF_PATH="/root/.mysql8" # 宿主机保存配置文件的路径
+HOST_CONF_PATH="/root/.mysql" # 宿主机保存配置文件的路径
 MYSQL_CONF_PATH="/etc/mysql/conf.d/docker.cnf" # 容器内配置文件路径
 
 # 创建宿主机配置目录

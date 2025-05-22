@@ -26,7 +26,7 @@ enforce-gtid-consistency = 1
 replica_compressed_protocol=1
 
 # 指定压缩算法，可选值包括：zlib, zstd, uncompressed
-compression_algorithms=zstd
+protocol_compression_algorithms=zstd,zlib,uncompressed
 
 # ---------- Binlog配置 ----------
 log_bin = mysql-bin
