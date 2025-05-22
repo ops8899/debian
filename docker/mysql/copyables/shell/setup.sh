@@ -34,12 +34,9 @@ bash /shell/generate_server_id.sh
 # 生成 root 用户配置
 bash /shell/generate_root_conf.sh
 
-# 生成 MySQL 客户端配置
-bash /shell/generate_client_conf.sh
-
 # 创建 cc@'%' 用户
 echo "创建 cc 用户并授予远程访问权限..."
-mysql <<EOF
+mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 -- 选择 mysql 数据库
 USE mysql;
 -- 创建一个临时表（DDL 操作会触发 GTID）
@@ -56,7 +53,7 @@ FLUSH PRIVILEGES;
 EOF
 
 echo "禁用 root 用户..."
-mysql <<EOF
+mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" <<EOF
 ALTER USER 'root'@'localhost' ACCOUNT LOCK;
 ALTER USER 'root'@'%' ACCOUNT LOCK;
 FLUSH PRIVILEGES;
@@ -64,7 +61,6 @@ EOF
 
 # 生成 MySQL 客户端配置
 bash /shell/generate_client_conf.sh
-
 
 # 配置文件路径
 CONFIG_FILE_REPL="/etc/mysql/repl.conf"
