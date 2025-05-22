@@ -23,9 +23,11 @@ if [ -z "$MASTER_HOST" ]; then
   exit 1
 fi
 
-# 在从库上恢复数据前，先重置 GTID 状态
-echo "重置从库 GTID 状态..."
+# 在从库上恢复数据前，停止从库复制，重置 GTID 状态
+echo "停止从库复制，重置从库 GTID 状态..."
 mysql <<EOF
+STOP SLAVE;
+RESET SLAVE ALL;
 RESET MASTER;
 EOF
 
@@ -52,8 +54,6 @@ fi
 # 6. 配置从库复制
 echo "配置从库复制..."
 mysql <<EOF
-STOP SLAVE;
-RESET SLAVE ALL;
 CHANGE MASTER TO
   MASTER_HOST='$MASTER_HOST',
   MASTER_PORT=$MASTER_PORT,

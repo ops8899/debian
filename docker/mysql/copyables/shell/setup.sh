@@ -9,6 +9,7 @@ apt-get update --allow-insecure-repositories && apt-get install -y --allow-unaut
     net-tools \
     procps \
     vim \
+    unzip \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

@@ -54,21 +54,11 @@ EOF
 # 设置文件权限，防止密码被其他用户读取
 chmod 600 "$MASTER_CONFIG_FILE"
 
-
-# 设置默认值
-REPLICA_HOST="localhost"
-REPLICA_PORT="3306"
-
 # 确保必需的变量已设置
 if [ -z "$MASTER_REPLICATION_USER" ] || [ -z "$MASTER_REPLICATION_PASSWORD" ]; then
     echo "复制用户或密码未设置，请检查 $CONFIG_FILE_ROOT。"
     exit 1
 fi
-
-echo "===== 开始主从复制设置 ====="
-echo "主库: $MASTER_HOST:$MASTER_PORT"
-echo "主库用户: $MASTER_USER"
-echo "从库: $REPLICA_HOST:$REPLICA_PORT"
 
 # 创建备份目录
 mkdir -p $BACKUP_DIR
