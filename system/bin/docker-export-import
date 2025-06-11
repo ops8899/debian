@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# 显示使用方法
+show_usage() {
+    echo "用法: $0 [选项] [参数]"
+    echo "选项:"
+    echo "  -e, --export <容器名> [输出文件名]    导出容器为压缩镜像文件"
+    echo "  -i, --import <文件名>                 导入镜像文件"
+    echo "  -h, --help                           显示此帮助信息"
+    echo
+    echo "示例:"
+    echo "  $0 -e aapanel                        # 导出 aapanel 容器为 aapanel_backup.tar.gz"
+    echo "  $0 -e aapanel my_backup.tar.gz       # 导出 aapanel 容器为指定文件名"
+    echo "  $0 -i aapanel_backup.tar.gz          # 导入镜像文件"
+    exit 1
+}
+
+# 导出函数
+export_container() {
+    local container_name=$1
+    local output_file=$2
+
+    # 检查容器是否存在
+    if ! docker ps -a | grep -q $container_name; then
+        echo "错误: 容器 '$container_name' 不存在"
+        exit 1
+    fi
+
+    # 如果没有指定输出文件名，使用默认名称
+    if [ -z "$output_file" ]; then
+        output_file="${container_name}_backup.tar.gz"
+    fi
+
+    # 获取容器的镜像名和标签
+    local image_info=$(docker inspect --format='{{.Config.Image}}' $container_name)
+    local backup_tag="backup_$(date +%Y%m%d_%H%M%S)"
+
+    echo "正在将容器提交为镜像..."
+    docker commit $container_name ${image_info}:${backup_tag}
+
+    echo "正在导出并压缩镜像..."
+    docker save ${image_info}:${backup_tag} | gzip > $output_file
+
+    # 删除临时镜像
+    docker rmi ${image_info}:${backup_tag} >/dev/null 2>&1
+
+    # 检查文件大小
+    local size=$(du -h $output_file | cut -f1)
+    echo "备份完成！"
+    echo "文件名: $output_file"
+    echo "文件大小: $size"
+}
+
+# 导入函数
+import_image() {
+    local input_file=$1
+
+    # 检查文件是否存在
+    if [ ! -f "$input_file" ]; then
+        echo "错误: 文件 '$input_file' 不存在"
+        exit 1
+    }
+
+    echo "正在导入镜像..."
+    if [[ $input_file == *.gz ]]; then
+        gunzip -c $input_file | docker load
+    elif [[ $input_file == *.xz ]]; then
+        xz -dc $input_file | docker load
+    else
+        docker load -i $input_file
+    fi
+
+    echo "导入完成！"
+    echo "已导入的镜像列表："
+    docker images --format "表格 {{.Repository}}:{{.Tag}} ({{.Size}})" | grep backup
+}
+
+# 主程序
+case "$1" in
+    -e|--export)
+        [ -z "$2" ] && show_usage
+        export_container "$2" "$3"
+        ;;
+    -i|--import)
+        [ -z "$2" ] && show_usage
+        import_image "$2"
+        ;;
+    -h|--help|*)
+        show_usage
+        ;;
+esac

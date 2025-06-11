@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# 检查是否以 root 权限运行
+if [ "$EUID" -ne 0 ]; then
+    echo "错误：请使用 root 权限运行此脚本"
+    exit 1
+fi
+
+# 检查 iptables 是否已安装
+if ! command -v iptables &> /dev/null; then
+    echo "错误：iptables 未安装，正在尝试安装..."
+    apt update && apt install -y iptables
+    if [ $? -ne 0 ]; then
+        echo "安装 iptables 失败，请手动检查系统"
+        exit 1
+    fi
+fi
+
+# 保存当前规则（以防万一需要恢复）
+echo "备份当前 iptables 规则..."
+iptables-save > /root/iptables_backup_$(date +%Y%m%d_%H%M%S).rules
+
+# 使用 set -e 在发生错误时立即退出
+set -e
+
+echo "开始清理 iptables 规则..."
+
+# 1. 清空所有表的所有规则
+iptables -F  # 清空 filter 表
+iptables -t nat -F  # 清空 nat 表
+iptables -t mangle -F  # 清空 mangle 表
+iptables -t raw -F  # 清空 raw 表
+echo "已清空所有表的规则"
+
+# 2. 删除所有自定义链
+iptables -X  # 清空 filter 表的自定义链
+iptables -t nat -X  # 清空 nat 表的自定义链
+iptables -t mangle -X  # 清空 mangle 表的自定义链
+iptables -t raw -X  # 清空 raw 表的自定义链
+echo "已删除所有自定义链"
+
+# 3. 重置所有计数器
+iptables -Z  # 重置 filter 表计数器
+iptables -t nat -Z  # 重置 nat 表计数器
+iptables -t mangle -Z  # 重置 mangle 表计数器
+iptables -t raw -Z  # 重置 raw 表计数器
+echo "已重置所有计数器"
+
+# 4. 设置默认策略为 ACCEPT
+iptables -P INPUT ACCEPT
+iptables -P FORWARD ACCEPT
+iptables -P OUTPUT ACCEPT
+echo "已将默认策略设置为 ACCEPT"
+
+# 5. 删除所有非默认路由
+echo "正在清理非默认路由..."
+ip route | grep -v "default" | while read -r route; do
+    ip route del $route 2>/dev/null || true
+done
+echo "已删除所有非默认路由"
+
+# 6. 显示当前状态
+echo -e "\n当前 iptables 规则："
+iptables -L -n -v
+
+echo -e "\n当前路由表："
+ip route show
+
+echo -e "\n清理完成！系统已恢复到默认状态。"
+echo "备份文件已保存在 /root 目录下"
+echo "如需恢复，请使用：iptables-restore < 备份文件名"
+
+# 重置 set -e
+set +e

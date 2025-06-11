@@ -1,0 +1,16 @@
+[mysqld]
+# 从库特定配置
+read_only = 1
+super_read_only = 1
+
+# 需要主从复制的数据库
+#replicate-do-db=test
+
+# 指定哪个数据库不用同步
+binlog-ignore-db=information_schema
+binlog-ignore-db=performance_schema
+binlog-ignore-db=mysql
+binlog-ignore-db=sys
+binlog-ignore-db=__recycle_bin__
+binlog-ignore-db=__cdb_recycle_bin__
+binlog-ignore-db=__tencentdb__
