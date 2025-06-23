@@ -10,17 +10,17 @@ cp /etc/my.cnf /etc/my.cnf.bak
 cp my.cnf /etc/my.cnf
 
 # 检查数据目录
-if [ -d /data/mysql ]; then
-  count=$(ls -1 /data/mysql | wc -l)
+if [ -d /www/server/mysql ]; then
+  count=$(ls -1 /www/server/mysql | wc -l)
   if [ $count -gt 0 ]; then
-    mv /data/mysql /data/mysql_$(date +%Y-%m-%d-%H-%M-%S)
+    mv /www/server/mysql /www/server/mysql_$(date +%Y-%m-%d-%H-%M-%S)
   fi
 else
-  mkdir -p /data/mysql
+  mkdir -p /www/server/mysql
 fi
 
 # 初始化 MySQL
-/www/server/mysql/bin/mysqld --initialize-insecure --user=mysql --basedir=/www/server/mysql --datadir=/data/mysql
+/www/server/mysql/bin/mysqld --initialize-insecure --user=mysql --basedir=/www/server/mysql --datadir=/www/server/mysql
 
 systemctl enable mysql
 
