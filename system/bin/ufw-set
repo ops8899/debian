@@ -1,0 +1,154 @@
+#!/bin/bash
+[[ "$EUID" -ne 0 ]] && echo "需要 root 权限！" && exit 1
+
+add_whitelist() {
+    [[ -z "$1" ]] && echo "错误：需要 IP/网段参数！" && return 1
+    if ! ufw status | grep -q "$1"; then
+        # 只添加入站规则，因为出站默认全部允许
+        ufw allow in from "$1" comment "入站：$1"
+    fi
+}
+
+add_open_port() {
+    [[ -z "$1" ]] && echo "错误：需要端口参数！" && return 1
+
+    local input=$1
+    local port_range protocol
+
+    # 处理协议，如果未指定则默认为 tcp
+    if [[ "$input" =~ / ]]; then
+        port_range=${input%/*}
+        protocol=${input#*/}
+    else
+        port_range=$input
+        protocol="tcp"
+    fi
+
+    # 将连字符格式转换为冒号格式
+    port_range=${port_range//-/:}
+
+    # 验证端口范围
+    if [[ "$port_range" =~ ^[0-9]+:[0-9]+$ ]]; then
+        local start_port=${port_range%:*}
+        local end_port=${port_range#*:}
+        if ((start_port > end_port)) || ((start_port < 1)) || ((end_port > 65535)); then
+            echo "错误：无效的端口范围 $port_range"
+            return 1
+        fi
+    elif [[ "$port_range" =~ ^[0-9]+$ ]]; then
+        if ((port_range < 1)) || ((port_range > 65535)); then
+            echo "错误：无效的端口号 $port_range"
+            return 1
+        fi
+    else
+        echo "错误：无效的端口格式 $port_range"
+        return 1
+    fi
+
+    # 只添加入站规则
+    ufw allow in "$port_range/$protocol" comment "开放端口($protocol)：$port_range"
+    echo "已添加规则：$port_range/$protocol"
+}
+
+add_ips_from_txt_record() {
+    local domain=$1
+    if [ -z "$domain" ]; then
+        echo "错误：请提供域名作为参数！"
+        return 1
+    fi
+
+    echo "解析域名 $domain 的 TXT 记录..."
+    local dig_result
+    dig_result=$(dig "$domain" TXT +short | tr -d '"')
+
+    if [ -z "$dig_result" ]; then
+        echo "未找到域名 $domain 的 TXT 记录或记录为空！"
+        return 1
+    fi
+
+    # 将逗号替换为空格，然后按空格分割
+    local normalized_result
+    normalized_result=$(echo "$dig_result" | tr ',' ' ')
+
+    IFS=' ' read -ra dig_entries <<< "$normalized_result"
+    for entry in "${dig_entries[@]}"; do
+        [[ -z "$entry" ]] && continue
+
+        # 处理每个条目
+        if is_valid_ipv4 "$entry"; then
+            echo "添加白名单 IP/网段：$entry"
+            add_whitelist "$entry"
+        elif [[ "$entry" =~ ^[0-9]+(-[0-9]+|:[0-9]+)?(/[a-z]+)?$ ]]; then
+            echo "添加端口规则：$entry"
+            add_open_port "$entry"
+        else
+            echo "跳过无效条目：$entry"
+        fi
+    done
+}
+
+setup_ufw() {
+    ufw reset
+    ufw default deny incoming   # 默认拒绝入站
+    ufw default allow outgoing  # 默认允许出站
+
+    # 允许本地回环
+    ufw allow in on lo
+    ufw allow out on lo
+}
+
+is_valid_ipv4() {
+    [[ $1 =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?$ ]] || return 1
+    local ip=${1%/*} # 移除 CIDR 部分
+    local IFS='.'
+    local -a octets
+    read -ra octets <<< "$ip"
+    for octet in "${octets[@]}"; do
+        ((octet < 0 || octet > 255)) && return 1
+    done
+    # 如果有 CIDR，检查其范围
+    if [[ $1 =~ / ]]; then
+        local cidr=${1#*/}
+        ((cidr < 0 || cidr > 32)) && return 1
+    fi
+    return 0
+}
+
+main() {
+    ufw status | grep -q "Status: active" || setup_ufw
+
+    for net in "10.0.0.0/8" "172.16.0.0/12" "192.168.0.0/16"; do
+        add_whitelist "$net"
+    done
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -txt)
+                shift
+                if [ -n "$1" ]; then
+                    add_ips_from_txt_record "$1"
+                    shift
+                else
+                    echo "错误：-txt 选项需要一个域名参数"
+                    exit 1
+                fi
+                ;;
+            *)
+                if is_valid_ipv4 "$1"; then
+                    add_whitelist "$1"
+                elif [[ "$1" =~ ^[0-9]+(-[0-9]+|:[0-9]+)?(/[a-z]+)?$ ]]; then
+                    add_open_port "$1"
+                else
+                    echo "跳过未知参数：$1"
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    ufw --force enable
+
+    ufw status verbose
+}
+
+main "$@"

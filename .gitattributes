@@ -1,0 +1,7 @@
+# 将所有文本文件的换行符标准化为 LF
+* text=auto eol=lf
+
+# 对于特定文件强制使用 LF
+*.sh text eol=lf
+*.bash text eol=lf
+*.py text eol=lf

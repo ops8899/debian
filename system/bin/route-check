@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# 设置颜色变量
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+# 打印带颜色的标题
+print_header() {
+    echo -e "\n${BLUE}=== $1 ===${NC}"
+    echo "----------------------------------------"
+}
+
+# 执行命令并打印结果
+execute_and_print() {
+    local cmd="$1"
+    echo -e "${GREEN}执行命令: ${cmd}${NC}"
+    echo "----------------------------------------"
+    if ! eval "$cmd" 2>&1; then
+        echo -e "${RED}命令执行失败${NC}"
+    fi
+    echo "----------------------------------------"
+}
+
+# 检查命令是否存在
+check_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo -e "${RED}警告: $1 命令未找到${NC}"
+        return 1
+    fi
+    return 0
+}
+
+# 检查 iptables 规则
+check_iptables() {
+    local tables=("mangle" "filter" "nat")
+    local chains=("OUTPUT" "PREROUTING" "POSTROUTING" "FORWARD" "INPUT")
+
+    for table in "${tables[@]}"; do
+        print_header "iptables ${table}表规则"
+        for chain in "${chains[@]}"; do
+            # 对于 filter 表，不需要指定 -t filter
+            if [ "$table" = "filter" ]; then
+                execute_and_print "iptables -L ${chain} -v -n --line-numbers"
+            else
+                execute_and_print "iptables -t ${table} -L ${chain} -v -n --line-numbers"
+            fi
+        done
+    done
+}
+
+# 主函数
+main() {
+    print_header "防火墙规则检查 (iptables)"
+    if check_command iptables; then
+        check_iptables
+    fi
+
+    print_header "UFW 状态检查"
+    if check_command ufw; then
+        execute_and_print "ufw status verbose"
+    fi
+
+    print_header "路由表检查"
+    if check_command ip; then
+        execute_and_print "ip route show table main"
+        # 检查 vpnbypass 表是否存在
+        if ip route show table vpnbypass >/dev/null 2>&1; then
+            execute_and_print "ip route show table vpnbypass"
+        else
+            echo -e "${RED}注意: vpnbypass 路由表不存在${NC}"
+        fi
+    fi
+
+    print_header "网络连通性检查"
+    if check_command traceroute; then
+        execute_and_print "traceroute -I -q 1 -w 1 -n 1.1.1.1"
+    fi
+
+    if check_command curl; then
+        execute_and_print "curl -v --max-time 3 ipinfo.io"
+    fi
+
+    print_header "网络监听端口"
+    if check_command netstat; then
+        execute_and_print "netstat -ntlpu"
+    fi
+
+    echo -e "\n${GREEN}检查完成！${NC}"
+}
+
+# 捕获 Ctrl+C
+trap 'echo -e "\n${RED}脚本被用户中断${NC}"; exit 1' INT
+
+# 运行主函数
+main

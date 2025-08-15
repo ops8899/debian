@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DOCKER_USERNAME=${1:-$DOCKER_USERNAME}
+DOCKER_TOKEN=${2:-$DOCKER_TOKEN}
+
+[ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_TOKEN" ] && echo "请提供用户名和令牌，或设置 DOCKER_USERNAME 和 DOCKER_TOKEN 环境变量" && exit 1
+
+response=$(curl -s -H "Authorization: Bearer $DOCKER_TOKEN" "https://hub.docker.com/v2/repositories/$DOCKER_USERNAME/?page_size=100")
+
+[ $? -ne 0 ] && echo "API连接失败" && exit 1
+
+echo "$response" | grep -o '"name":"[^"]*"' | sed 's/"name":"//;s/"$//' | while read repo; do
+    curl -s -X DELETE -H "Authorization: Bearer $DOCKER_TOKEN" "https://hub.docker.com/v2/repositories/$DOCKER_USERNAME/$repo/"
+    echo "已删除: $repo"
+    sleep 1
+done

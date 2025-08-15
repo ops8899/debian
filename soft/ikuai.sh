@@ -1,0 +1,1 @@
+https://www.ikuai8.com/download.php?n=/3.x/iso/iKuai8_x32_3.7.18_Build202501081617.iso
