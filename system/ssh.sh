@@ -46,7 +46,6 @@ declare -A ssh_params=(
   ["Protocol"]="2"
   ["PermitRootLogin"]="yes"  # 允许 root 登录
   ["MaxSessions"]="20"       # 设置最大会话数为 20
-  ["KexAlgorithms"]="diffie-hellman-group-exchange-sha1,diffie-hellman-group14-sha256,diffie-hellman-group14-sha1,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,curve25519-sha256"       # 设置最大会话数为 20
 )
 
 # 设置 SSH 参数
