@@ -4,58 +4,48 @@
 # MySQL 数据库备份脚本
 # 功能: 自动备份MySQL数据库，支持压缩、指定数据库等功能
 # 版本: 1.0
-# 日期: $(date '+%Y-%m-%d')
 #==============================================================================
 
 #------------------------------------------------------------------------------
-# 使用示例 (可直接复制的命令):
+# 使用示例:
 #------------------------------------------------------------------------------
 
 : <<'EXAMPLES'
 
-基本备份（本地MySQL，备份所有业务库）:
+基本备份:
 ./backup.sh -u root -p password123
 
-远程MySQL备份:
-./backup.sh -h 192.168.1.100 -P 3307 -u root -p password123
-
-备份指定数据库并启用压缩:
+备份指定数据库并压缩:
 ./backup.sh -u root -p password123 -d "shop_db user_db" -c
 
-自定义输出目录:
-./backup.sh -u root -p password123 -o /data/mysql_backup
+远程MySQL备份:
+./backup.sh -h 192.168.1.100 -P 3306 -u root -p password123 -c
 
-完整参数备份（生产环境推荐）:
-./backup.sh -h 192.168.1.100 -P 3306 -u repl -p repl_pass \
-  -d "ecommerce crm finance" -c -o /backup/mysql
-
-指定mysqldump路径（非标准安装）:
+指定mysqldump路径:
 ./backup.sh -u root -p password123 -m /usr/local/mysql/bin/mysqldump
-
-单个数据库备份:
-./backup.sh -u root -p password123 -d "my_database"
-
-大数据库压缩备份（节省空间）:
-./backup.sh -u root -p password123 -c -o /backup/compressed
 
 EXAMPLES
 
 #------------------------------------------------------------------------------
-# 创建备份专用用户示例:
+# 注意事项:
 #------------------------------------------------------------------------------
 
-: <<'REPLICATION_USER_SETUP'
-创建复制用户（具有所有权限，用于主从复制）:
+: <<'NOTES'
 
+1. 备份文件开头包含准确的binlog位置信息，可用于主从复制恢复
+2. 默认备份所有业务数据库，排除系统库
+3. 建议大数据库使用 -c 参数启用压缩
+4. 需要用户具有SELECT、LOCK TABLES、SHOW VIEW等权限
+5. MySQL 5.7+自动启用GTID支持，MySQL 8.0+使用utf8mb4字符集
+
+创建复制用户:
 mysql -u root -p <<EOF
--- 创建复制用户（如果不存在）
-CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED BY 'repl_password';
--- 授予所有权限
-GRANT ALL PRIVILEGES ON *.* TO 'repl'@'%' WITH GRANT OPTION;
+CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED BY 'repl_pass';
+GRANT SELECT, LOCK TABLES, SHOW VIEW, EVENT, TRIGGER, REPLICATION CLIENT ON *.* TO 'repl'@'%';
 FLUSH PRIVILEGES;
 EOF
 
-REPLICATION_USER_SETUP
+NOTES
 
 show_usage() {
     echo "MySQL数据库备份脚本"
@@ -70,23 +60,15 @@ show_usage() {
     echo "  -h HOST        主机地址（默认：127.0.0.1）"
     echo "  -P PORT        端口号（默认：3306）"
     echo "  -d DATABASES   指定数据库（多个用空格分隔，默认备份所有业务库）"
-    echo "  -c             启用gzip压缩（推荐用于大数据库）"
+    echo "  -c             启用gzip压缩"
     echo "  -o DIR         输出目录（默认：/backup）"
     echo "  -m PATH        指定mysqldump路径（默认：mysqldump）"
     echo ""
-    echo "常用示例:"
-    echo "  # 基本备份"
+    echo "示例:"
     echo "  $0 -u root -p mypassword"
-    echo ""
-    echo "  # 压缩备份指定数据库"
     echo "  $0 -u root -p mypassword -d \"db1 db2\" -c"
-    echo ""
-    echo "  # 远程服务器备份"
-    echo "  $0 -h 192.168.1.100 -u root -p mypassword -o /data/backup"
-    echo ""
-    echo "输出文件:"
-    echo "  备份文件: mysql_backup_YYYY-MM-DD_HHMMSS.sql[.gz]"
-    echo "  日志文件: mysql_backup_YYYY-MM-DD_HHMMSS.log"
+    echo "  $0 -h 192.168.1.100 -u root -p mypassword -c"
+    echo "  $0 -u root -p mypassword -m /usr/local/mysql/bin/mysqldump"
 }
 
 log() {
@@ -116,52 +98,57 @@ done
 # 参数校验
 if [[ -z "$USER" || -z "$PASSWORD" ]]; then
     echo "错误: 缺少必需参数！"
-    echo ""
     show_usage
+    exit 1
+fi
+
+# 检查mysqldump是否存在
+if ! command -v "$MYSQLDUMP_BIN" >/dev/null 2>&1; then
+    echo "错误: mysqldump 未找到: $MYSQLDUMP_BIN"
+    echo "请检查路径或使用 -m 参数指定正确路径"
     exit 1
 fi
 
 # 初始化
 mkdir -p "$OUTPUT_DIR"
-DATE=$(date +%Y-%m-%d_%H%M%S)
+DATE=$(date +%Y%m%d_%H%M%S)
 LOG_FILE="$OUTPUT_DIR/mysql_backup_$DATE.log"
 START_TIME=$(date +%s)
 
 log "========== MySQL 备份开始 =========="
 log "主机: $HOST:$PORT | 用户: $USER"
 log "输出目录: $OUTPUT_DIR"
-log "压缩模式: $([ "$COMPRESS" = true ] && echo "启用" || echo "禁用")"
+log "mysqldump路径: $MYSQLDUMP_BIN"
 
-# 测试连接并获取版本
-MYSQL_VERSION=$(mysql -h"$HOST" -P"$PORT" -u"$USER" -p"$PASSWORD" -s -N -e "SELECT VERSION();" 2>/dev/null)
-if [[ $? -ne 0 ]]; then
+# 测试连接
+if ! mysql -h"$HOST" -P"$PORT" -u"$USER" -p"$PASSWORD" -e "SELECT 1;" >/dev/null 2>&1; then
     log "错误: 数据库连接失败！请检查连接参数"
     echo "✗ 连接失败，请检查主机地址、端口、用户名和密码"
     exit 1
 fi
 
-log "MySQL版本: $MYSQL_VERSION"
-MAJOR_VERSION=$(echo "$MYSQL_VERSION" | cut -d. -f1)
-MINOR_VERSION=$(echo "$MYSQL_VERSION" | cut -d. -f2)
-
-# 获取binlog位置
-BINLOG_INFO=$(mysql -h"$HOST" -P"$PORT" -u"$USER" -p"$PASSWORD" -s -N -e "SHOW MASTER STATUS;" 2>/dev/null)
-if [[ -n "$BINLOG_INFO" ]]; then
-    BINLOG_FILE=$(echo "$BINLOG_INFO" | awk '{print $1}')
-    BINLOG_POS=$(echo "$BINLOG_INFO" | awk '{print $2}')
-    log "Binlog位置: $BINLOG_FILE:$BINLOG_POS"
+# 获取MySQL版本
+VERSION_STRING=$(mysql -h"$HOST" -P"$PORT" -u"$USER" -p"$PASSWORD" -s -N -e "SELECT VERSION();" 2>/dev/null)
+if [[ -n "$VERSION_STRING" ]]; then
+    MAJOR_VERSION=$(echo "$VERSION_STRING" | cut -d. -f1)
+    MINOR_VERSION=$(echo "$VERSION_STRING" | cut -d. -f2)
+    log "MySQL版本: $VERSION_STRING (主版本: $MAJOR_VERSION, 次版本: $MINOR_VERSION)"
 else
-    log "警告: 未开启binlog或无权限查看"
+    log "警告: 无法获取MySQL版本，使用默认配置"
+    MAJOR_VERSION=5
+    MINOR_VERSION=6
 fi
 
 # 构建mysqldump命令
-MYSQLDUMP_CMD="$MYSQLDUMP_BIN -h$HOST -P$PORT -u$USER -p$PASSWORD --single-transaction --routines --triggers --events --flush-logs --master-data=2"
+MYSQLDUMP_CMD="$MYSQLDUMP_BIN -h$HOST -P$PORT -u$USER -p$PASSWORD --single-transaction --routines --triggers --events --master-data=2"
 
-# 根据版本设置字符集
+# 根据版本设置字符集和GTID
 if [[ "$MAJOR_VERSION" -ge 8 ]] || [[ "$MAJOR_VERSION" -eq 5 && "$MINOR_VERSION" -ge 7 ]]; then
     MYSQLDUMP_CMD="$MYSQLDUMP_CMD --set-gtid-purged=ON --default-character-set=utf8mb4"
+    log "启用GTID支持和utf8mb4字符集"
 else
     MYSQLDUMP_CMD="$MYSQLDUMP_CMD --default-character-set=utf8"
+    log "使用utf8字符集"
 fi
 
 # 确定数据库
@@ -210,12 +197,8 @@ if [[ $? -eq 0 && -s "$BACKUP_FILE" ]]; then
     echo "  大小: $FILE_SIZE"
     echo "  耗时: ${MINUTES}分${SECONDS}秒"
     echo "  数据库: $DATABASES"
+    echo "  版本: $VERSION_STRING"
     echo "  日志: $LOG_FILE"
-
-    # 如果启用了压缩，显示压缩信息
-    if [[ "$COMPRESS" = true ]]; then
-        echo "  压缩: 已启用"
-    fi
 else
     log "备份失败！请检查错误信息"
     echo "✗ 备份失败，请查看日志: $LOG_FILE"
