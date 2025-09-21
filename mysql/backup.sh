@@ -109,10 +109,12 @@ if ! command -v "$MYSQLDUMP_BIN" >/dev/null 2>&1; then
     exit 1
 fi
 
-# 初始化
+# 创建日志目录并初始化
+LOG_DIR="$(dirname "$0")/log"
+[[ ! -d "$LOG_DIR" ]] && mkdir -p "$LOG_DIR"
 mkdir -p "$OUTPUT_DIR"
 DATE=$(date +%Y%m%d_%H%M%S)
-LOG_FILE="$OUTPUT_DIR/mysql_backup_$DATE.log"
+LOG_FILE="$LOG_DIR/mysql_backup_$DATE.log"
 START_TIME=$(date +%s)
 
 log "========== MySQL 备份开始 =========="
