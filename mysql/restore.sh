@@ -63,23 +63,43 @@ confirm() {
     esac
 }
 
+# 获取MySQL版本信息
+get_mysql_version() {
+    VERSION_STRING=$($TEST_MYSQL_CMD -s -N -e "SELECT VERSION();" 2>/dev/null)
+    if [[ -n "$VERSION_STRING" ]]; then
+        MAJOR_VERSION=$(echo "$VERSION_STRING" | cut -d. -f1)
+        MINOR_VERSION=$(echo "$VERSION_STRING" | cut -d. -f2)
+        log "MySQL版本: $VERSION_STRING (主版本: $MAJOR_VERSION, 次版本: $MINOR_VERSION)"
+    else
+        log "警告: 无法获取MySQL版本，使用默认配置"
+        MAJOR_VERSION=5
+        MINOR_VERSION=5
+    fi
+}
+
 # 重置GTID状态函数
 reset_gtid_status() {
     log "重置GTID状态以避免冲突"
     echo "正在重置GTID状态..."
 
-    $TEST_MYSQL_CMD <<EOF 2>>"$LOG_FILE"
+    # 检查是否支持GTID（MySQL 5.6+）
+    if [[ "$MAJOR_VERSION" -ge 6 ]] || [[ "$MAJOR_VERSION" -eq 5 && "$MINOR_VERSION" -ge 6 ]]; then
+        $TEST_MYSQL_CMD <<EOF 2>>"$LOG_FILE"
 STOP SLAVE;
 RESET SLAVE ALL;
 RESET MASTER;
 EOF
 
-    if [[ $? -eq 0 ]]; then
-        log "GTID状态重置成功"
-        echo "✓ GTID状态重置成功"
+        if [[ $? -eq 0 ]]; then
+            log "GTID状态重置成功"
+            echo "✓ GTID状态重置成功"
+        else
+            log "警告: GTID重置可能失败，但继续执行恢复"
+            echo "⚠️  GTID重置可能失败，但继续执行恢复"
+        fi
     else
-        log "警告: GTID重置可能失败，但继续执行恢复"
-        echo "⚠️  GTID重置可能失败，但继续执行恢复"
+        log "MySQL 5.5版本，跳过GTID重置"
+        echo "✓ MySQL 5.5版本，跳过GTID重置"
     fi
 }
 
@@ -164,6 +184,9 @@ fi
 
 echo "✓ 数据库连接成功"
 
+# 获取MySQL版本信息
+get_mysql_version
+
 # 处理压缩文件
 RESTORE_FILE="$BACKUP_FILE"
 EXTRACTED=false
@@ -214,7 +237,8 @@ if [[ "$FORCE_MODE" = false ]]; then
     fi
     echo "此操作将:"
     echo "1. 重置目标库的GTID状态"
-    echo "2. 覆盖现有数据！"
+    echo "2. 关闭binlog记录以提高性能"
+    echo "3. 覆盖现有数据！"
     echo "=========================================="
     echo ""
 
@@ -237,15 +261,44 @@ if [[ "$USER_SPECIFIED" = true && -z "$PASSWORD" ]]; then
     echo "请输入MySQL密码进行数据恢复:"
 fi
 
-# 直接导入备份文件（不需要过滤，因为已经重置了GTID）
+# 构建恢复命令，关闭binlog记录
+RESTORE_MYSQL_CMD="$MYSQL_CMD --init-command=\"SET sql_log_bin=0;\""
+
+# 根据MySQL版本添加额外参数
+if [[ "$MAJOR_VERSION" -ge 8 ]] || [[ "$MAJOR_VERSION" -eq 5 && "$MINOR_VERSION" -ge 7 ]]; then
+    # MySQL 5.7+ 支持更多选项
+    RESTORE_MYSQL_CMD="$RESTORE_MYSQL_CMD --init-command=\"SET foreign_key_checks=0; SET unique_checks=0; SET autocommit=0;\""
+    log "MySQL 5.7+: 启用优化参数（关闭外键检查、唯一性检查、自动提交、binlog记录）"
+elif [[ "$MAJOR_VERSION" -eq 5 && "$MINOR_VERSION" -ge 6 ]]; then
+    # MySQL 5.6 基本优化
+    RESTORE_MYSQL_CMD="$RESTORE_MYSQL_CMD --init-command=\"SET foreign_key_checks=0; SET unique_checks=0;\""
+    log "MySQL 5.6: 启用基本优化参数（关闭外键检查、唯一性检查、binlog记录）"
+else
+    # MySQL 5.5 最小配置
+    log "MySQL 5.5: 使用基本配置（关闭binlog记录）"
+fi
+
+# 执行恢复
 if command -v pv >/dev/null 2>&1; then
-    log "使用pv显示恢复进度"
-    pv "$RESTORE_FILE" | $MYSQL_CMD 2>>"$LOG_FILE"
+    log "使用pv显示恢复进度，关闭binlog记录"
+    pv "$RESTORE_FILE" | eval "$RESTORE_MYSQL_CMD" 2>>"$LOG_FILE"
     RESTORE_RESULT=$?
 else
-    log "导入备份数据"
-    $MYSQL_CMD < "$RESTORE_FILE" 2>>"$LOG_FILE"
+    log "导入备份数据，关闭binlog记录"
+    eval "$RESTORE_MYSQL_CMD" < "$RESTORE_FILE" 2>>"$LOG_FILE"
     RESTORE_RESULT=$?
+fi
+
+# 恢复后重新启用相关设置（如果需要）
+if [[ $RESTORE_RESULT -eq 0 ]]; then
+    log "恢复数据成功，重新启用相关设置"
+    $TEST_MYSQL_CMD <<EOF 2>>"$LOG_FILE"
+SET sql_log_bin=1;
+SET foreign_key_checks=1;
+SET unique_checks=1;
+SET autocommit=1;
+COMMIT;
+EOF
 fi
 
 # 计算耗时并输出结果
@@ -277,6 +330,7 @@ if [[ "$EXTRACTED" = true ]]; then
     echo "  解压文件: $RESTORE_FILE"
 fi
 echo "  目标库: $DISPLAY_HOST:$DISPLAY_PORT"
+echo "  MySQL版本: $VERSION_STRING"
 echo "  耗时: ${HOURS}小时${MINUTES}分钟${SECONDS}秒"
 echo "  日志: $LOG_FILE"
 
