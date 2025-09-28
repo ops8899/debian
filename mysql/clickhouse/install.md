@@ -1,5 +1,6 @@
 1、安装python3 虚拟环境
-
+bash /debian/system/py3.sh
+ 
 2、安装psutil clickhouse_connect
 
 /opt/py3/bin/pip3 install psutil clickhouse_connect
@@ -25,7 +26,7 @@ docker run -d \
 -p 8123:8123 \
 -p 9000:9000 \
 -p 9004:9004 \
--e CLICKHOUSE_PASSWORD=Lanjing8899 \
+-e CLICKHOUSE_PASSWORD=Hm8899 \
 --ulimit nofile=262144:262144 \
 clickhouse/clickhouse-server
 
