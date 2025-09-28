@@ -21,5 +21,9 @@ DELETE FROM mysql.user WHERE User='root' AND Host='%';
 CREATE USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY '${MYSQL_PASSWORD}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
+
+
+
+
 "
 /www/server/mysql/bin/mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "$PRIV_SQL"

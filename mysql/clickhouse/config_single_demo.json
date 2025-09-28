@@ -1,0 +1,26 @@
+{
+  "clickhouse": {
+    "host": "localhost",
+    "port": 8123,
+    "username": "default",
+    "password": "",
+    "database": "analytics"
+  },
+  "mysql": {
+    "host": "mysql.example.com",
+    "port": 3306,
+    "database": "production",
+    "username": "sync_user",
+    "password": "your_password"
+  },
+  "tables": {
+    "orders": {
+      "id_field": "order_id",
+      "time_field": "updated_at"
+    },
+    "users": {
+      "id_field": "user_id",
+      "time_field": "modified_time"
+    }
+  }
+}
