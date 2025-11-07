@@ -30,4 +30,16 @@ docker run -d \
 --ulimit nofile=262144:262144 \
 clickhouse/clickhouse-server
 
+# 等待启动
+sleep 10
+
+# 配置查询缓存
+docker exec ch1 clickhouse-client --query "
+SET use_query_cache = 1;
+SET enable_writes_to_query_cache = 1;
+SET enable_reads_from_query_cache = 1;
+SET query_cache_ttl = 3600;
+SELECT 'Query cache enabled' as result;
+"
+
 # 从 MySQL 迁移数据到 ClickHouse

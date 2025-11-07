@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""MySQL到ClickHouse高速同步工具 - 支持主从分离版 - 去除时间函数优化版 - 修正NULL约束版"""
+"""MySQL到ClickHouse高速同步工具 - 支持主从分离版 - 去除时间函数优化版"""
 
 import argparse
 import clickhouse_connect
@@ -11,7 +11,6 @@ import psutil
 import signal
 import sys
 import time
-import pymysql
 from datetime import timezone, timedelta, datetime
 
 # 配置
@@ -25,111 +24,6 @@ logging.basicConfig(
     format='%(asctime)s - %(message)s',
     stream=sys.stdout  # 强制输出到标准输出
 )
-
-def get_mysql_column_info(connection, table_name):
-    """获取 MySQL 表的列信息，包括 NULL 约束"""
-    query = """
-    SELECT 
-        COLUMN_NAME,
-        DATA_TYPE,
-        IS_NULLABLE,
-        COLUMN_DEFAULT,
-        COLUMN_TYPE
-    FROM INFORMATION_SCHEMA.COLUMNS 
-    WHERE TABLE_SCHEMA = DATABASE() 
-    AND TABLE_NAME = %s
-    ORDER BY ORDINAL_POSITION
-    """
-
-    cursor = connection.cursor()
-    cursor.execute(query, (table_name,))
-    return cursor.fetchall()
-
-def map_mysql_to_clickhouse_type(data_type, column_type):
-    """MySQL数据类型映射到ClickHouse类型"""
-    type_mapping = {
-        'tinyint': 'Int8',
-        'smallint': 'Int16',
-        'mediumint': 'Int32',
-        'int': 'Int32',
-        'integer': 'Int32',
-        'bigint': 'Int64',
-        'float': 'Float32',
-        'double': 'Float64',
-        'decimal': 'Decimal64(2)',
-        'varchar': 'String',
-        'char': 'String',
-        'text': 'String',
-        'longtext': 'String',
-        'mediumtext': 'String',
-        'tinytext': 'String',
-        'datetime': 'DateTime64(3)',
-        'timestamp': 'DateTime64(3)',
-        'date': 'Date',
-        'time': 'String',
-        'year': 'Int16',
-        'json': 'String',
-        'blob': 'String',
-        'longblob': 'String',
-        'mediumblob': 'String',
-        'tinyblob': 'String'
-    }
-
-    # 处理unsigned类型
-    if 'unsigned' in column_type.lower():
-        if data_type == 'tinyint':
-            return 'UInt8'
-        elif data_type == 'smallint':
-            return 'UInt16'
-        elif data_type in ['mediumint', 'int', 'integer']:
-            return 'UInt32'
-        elif data_type == 'bigint':
-            return 'UInt64'
-
-    return type_mapping.get(data_type, 'String')
-
-def create_clickhouse_table_with_proper_nullable(mysql_conn, ch_conn, table_name, cfg):
-    """根据 MySQL 字段的实际 NULL 约束创建 ClickHouse 表"""
-
-    # 获取 MySQL 表结构
-    columns_info = get_mysql_column_info(mysql_conn, table_name)
-
-    clickhouse_columns = []
-
-    for col_name, data_type, is_nullable, default_val, column_type in columns_info:
-        # 映射数据类型
-        ch_type = map_mysql_to_clickhouse_type(data_type, column_type)
-
-        # 关键：只有当 MySQL 字段允许 NULL 时才设置为 Nullable
-        # ClickHouse建议避免使用Nullable列，因为它们会引入额外的开销 [[1]](#__1)
-        if is_nullable == 'YES':
-            ch_type = f"Nullable({ch_type})"
-
-        clickhouse_columns.append(f"`{col_name}` {ch_type}")
-
-    # 创建 ClickHouse 表 - 使用ReplacingMergeTree以支持数据更新
-    create_sql = f"""
-    CREATE TABLE {table_name} (
-        {', '.join(clickhouse_columns)}
-    ) ENGINE = ReplacingMergeTree({cfg['time_field']})
-    ORDER BY ({cfg['id_field']})
-    PRIMARY KEY ({cfg['id_field']})
-    SETTINGS index_granularity = 8192
-    """
-
-    ch_conn.command(create_sql)
-    logging.info(f"✅ {table_name}: 已创建表结构，正确处理NULL约束")
-
-def get_mysql_connection(mysql_config):
-    """创建MySQL连接"""
-    return pymysql.connect(
-        host=mysql_config['host'],
-        port=mysql_config['port'],
-        user=mysql_config['username'],
-        password=mysql_config['password'],
-        database=mysql_config['database'],
-        charset='utf8mb4'
-    )
 
 def load_config(path):
     if not os.path.exists(path):
@@ -150,6 +44,7 @@ def load_config(path):
 
     with open(path) as f:
         return json.load(f)
+
 
 def check_single_instance(config_path):
     """确保同一配置只运行一个实例"""
@@ -200,35 +95,7 @@ def main():
     last_backfill_time = 0
 
     def get_client():
-        """获取ClickHouse客户端，自动创建数据库"""
-        try:
-            # 直接尝试连接目标数据库
-            return clickhouse_connect.get_client(**CH_CONFIG)
-        except Exception as e:
-            error_msg = str(e)
-            if "does not exist" in error_msg or "UNKNOWN_DATABASE" in error_msg:
-                # 数据库不存在，先创建
-                database_name = CH_CONFIG['database']
-                logging.info(f"🔧 数据库 '{database_name}' 不存在，正在自动创建...")
-
-                # 创建临时配置，不指定数据库（连接到默认数据库）
-                temp_config = {k: v for k, v in CH_CONFIG.items() if k != 'database'}
-
-                temp_client = clickhouse_connect.get_client(**temp_config)
-                try:
-                    temp_client.command(f"CREATE DATABASE IF NOT EXISTS `{database_name}`")
-                    logging.info(f"✅ 数据库 '{database_name}' 创建成功")
-                except Exception as create_error:
-                    logging.error(f"❌ 创建数据库失败: {create_error}")
-                    raise create_error
-                finally:
-                    temp_client.close()
-
-                # 重新连接目标数据库
-                return clickhouse_connect.get_client(**CH_CONFIG)
-            else:
-                logging.error(f"❌ ClickHouse连接失败: {error_msg}")
-                raise e
+        return clickhouse_connect.get_client(**CH_CONFIG)
 
     def create_mysql_db(client, db_name, mysql_cfg, purpose=""):
         """创建MySQL数据库引擎"""
@@ -260,34 +127,34 @@ def main():
 
         # 创建从库连接（如果配置了从库）
         init_db = "mysql_db"  # 默认使用主库初始化
-        init_mysql_config = MYSQL_CONFIG
         if MYSQL_SLAVE_CONFIG:
             create_mysql_db(client, "mysql_slave_db", MYSQL_SLAVE_CONFIG, "从库")
             init_db = "mysql_slave_db"  # 使用从库初始化
-            init_mysql_config = MYSQL_SLAVE_CONFIG
         else:
             logging.info("📝 未配置从库，全量初始化将使用主库")
 
-        # 创建表 - 使用正确的NULL约束处理
+        # 创建表
         for table, cfg in TABLES.items():
             if not client.query(f"EXISTS TABLE {table}").result_rows[0][0] or args.reset:
-                # 获取MySQL连接以分析表结构
-                mysql_conn = get_mysql_connection(init_mysql_config)
+                # 使用初始化库的结构创建表
+                client.command(
+                    f"CREATE TABLE {table} ENGINE = ReplacingMergeTree({cfg['time_field']}) ORDER BY {cfg['id_field']} AS SELECT * FROM {init_db}.{table} LIMIT 0")
 
+                # 转换DateTime字段
                 try:
-                    # 使用新的函数创建表，正确处理NULL约束
-                    create_clickhouse_table_with_proper_nullable(mysql_conn, client, table, cfg)
+                    for col_name, col_type, *_ in client.query(f"DESCRIBE {table}").result_rows:
+                        if 'DateTime' in col_type and 'DateTime64' not in col_type:
+                            client.command(f"ALTER TABLE {table} MODIFY COLUMN {col_name} DateTime64(3)")
+                except:
+                    pass
 
-                    if args.reset:
-                        db_type = "从库" if MYSQL_SLAVE_CONFIG else "主库"
-                        logging.info(f"📥 {table}: 开始全量同步（使用{db_type}）")
-                        # 全量同步使用初始化库
-                        client.command(f"INSERT INTO {table} SELECT * FROM {init_db}.{table}")
-                        count = client.query(f"SELECT COUNT(*) FROM {table}").result_rows[0][0]
-                        logging.info(f"📥 {table}: 全量同步完成 {count} 条")
-
-                finally:
-                    mysql_conn.close()
+                if args.reset:
+                    db_type = "从库" if MYSQL_SLAVE_CONFIG else "主库"
+                    logging.info(f"📥 {table}: 开始全量同步（使用{db_type}）")
+                    # 全量同步使用初始化库
+                    client.command(f"INSERT INTO {table} SELECT * FROM {init_db}.{table}")
+                    count = client.query(f"SELECT COUNT(*) FROM {table}").result_rows[0][0]
+                    logging.info(f"📥 {table}: 全量同步完成 {count} 条")
 
         client.close()
         return True
@@ -383,15 +250,15 @@ def main():
         master_info = f"{MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}"
         if MYSQL_SLAVE_CONFIG:
             slave_info = f"{MYSQL_SLAVE_CONFIG['host']}:{MYSQL_SLAVE_CONFIG['port']}"
-            logging.info(f"🚀 启动成功 (主从模式 + 时间优化 + NULL约束修正)")
+            logging.info(f"🚀 启动成功 (主从模式 + 时间优化)")
             logging.info(f"📊 主库: {master_info} (增量+补数据)")
             logging.info(f"📚 从库: {slave_info} (全量初始化)")
         else:
-            logging.info(f"🚀 启动成功 (单库模式 + 时间优化 + NULL约束修正)")
+            logging.info(f"🚀 启动成功 (单库模式 + 时间优化)")
             logging.info(f"📊 数据库: {master_info} (全部操作)")
 
         logging.info(f"📋 表: {', '.join(TABLES.keys())} | 同步: {SYNC_INTERVAL}s | 补充: {BACKFILL_INTERVAL}s")
-        logging.info(f"⚡ 优化: 去除toUnixTimestamp函数，直接时间比较，正确处理NULL约束")
+        logging.info(f"⚡ 优化: 去除toUnixTimestamp函数，直接时间比较")
 
         try:
             while not stop_flag:
@@ -428,6 +295,7 @@ def main():
             os.unlink(lock_file)
         except:
             pass
+
 
 if __name__ == "__main__":
     main()

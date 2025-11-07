@@ -14,11 +14,11 @@ set_ssh_config() {
 
   if grep -q "^#*$param" "$file"; then
     # 参数存在，更新它
-    sudo sed -i "s/^#*$param.*/$param $value/" "$file"
+    sed -i "s/^#*$param.*/$param $value/" "$file"
     echo "已更新 $param 为 $value"
   else
     # 参数不存在，添加它
-    echo "$param $value" | sudo tee -a "$file" >/dev/null
+    echo "$param $value" | tee -a "$file" >/dev/null
     echo "已添加 $param，值为 $value"
   fi
 }
@@ -53,8 +53,13 @@ for param in "${!ssh_params[@]}"; do
   set_ssh_config "$param" "${ssh_params[$param]}"
 done
 
+systemctl stop ssh.socket
+systemctl disable ssh.socket
+systemctl enable ssh.service
+systemctl daemon-reload
+
 # 重启 SSH 服务
-sudo systemctl restart sshd
+systemctl restart sshd
 
 netstat -lnptu|grep sshd
 
