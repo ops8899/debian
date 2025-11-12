@@ -16,7 +16,7 @@ apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
 
 # 安装常用工具和软件，使用选项来避免交互
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-  sudo ntpdate openssh-server systemd systemd-sysv cron logrotate \
+  sudo ntpdate openssh-server systemd systemd-sysv cron logrotate iptables \
   net-tools vnstat tcpdump nmap netcat-openbsd isc-dhcp-client iftop wget curl htop vim lsof unzip zip psmisc git ufw rsync \
   traceroute dnsutils  iputils-ping \
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
