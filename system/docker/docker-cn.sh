@@ -65,8 +65,7 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
     fi
 
     apt update
-    apt install -y docker-co
-    mpose-plugin
+    apt install -y docker-compose-plugin
 else
     echo -e "${GREEN}Docker Compose 已安装，跳过安装步骤${NC}"
 fi
