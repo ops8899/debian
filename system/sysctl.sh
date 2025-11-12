@@ -15,12 +15,12 @@ set_sysctl_param() {
     echo "正在将 $param 设置为 $value"
 
     if grep -Eq "^[# ]*$param" "$file"; then
-        sudo sed -i "s|^[# ]*$param.*|$param = $value|" "$file"
+        sed -i "s|^[# ]*$param.*|$param = $value|" "$file"
     else
-        echo "$param = $value" | sudo tee -a "$file" > /dev/null
+        echo "$param = $value" | tee -a "$file" > /dev/null
     fi
 
-    sudo sysctl -w "$param=$value" > /dev/null
+    sysctl -w "$param=$value" > /dev/null
     echo "$param 已设置为 $value 并立即生效"
 }
 
@@ -56,8 +56,8 @@ root     hard    nofile         65535
 EOF
 
     # 替换原文件
-    sudo mv "$tmp_file" "$limits_file"
-    sudo chmod 644 "$limits_file"
+    mv "$tmp_file" "$limits_file"
+    chmod 644 "$limits_file"
 
     echo "系统限制配置完成"
 }
@@ -134,11 +134,11 @@ lsmod | grep bbr
 # 添加 pam_limits.so 配置
 echo "配置 PAM limits..."
 if ! grep -q "session required pam_limits.so" /etc/pam.d/common-session; then
-    echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session > /dev/null
+    echo "session required pam_limits.so" | tee -a /etc/pam.d/common-session > /dev/null
 fi
 
 if ! grep -q "session required pam_limits.so" /etc/pam.d/common-session-noninteractive; then
-    echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session-noninteractive > /dev/null
+    echo "session required pam_limits.so" | tee -a /etc/pam.d/common-session-noninteractive > /dev/null
 fi
 
 # 显示当前系统限制

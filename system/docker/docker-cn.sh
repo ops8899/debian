@@ -47,25 +47,25 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
     if [ "$USE_CHINA_MIRROR" = true ]; then
         echo -e "${BLUE}使用清华大学镜像源安装...${NC}"
         # 使用清华大学镜像源
-        curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
         echo \
           "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian \
           "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          tee /etc/apt/sources.list.d/docker.list > /dev/null
     else
         echo -e "${BLUE}使用 Docker 官方源安装...${NC}"
         # 使用官方源
-        curl -fsSL https://download.docker.com/linux/debian/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 
         echo \
           "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
           "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-          sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+          tee /etc/apt/sources.list.d/docker.list > /dev/null
     fi
 
-    sudo apt update
-    sudo apt install -y docker-co
+    apt update
+    apt install -y docker-co
     mpose-plugin
 else
     echo -e "${GREEN}Docker Compose 已安装，跳过安装步骤${NC}"

@@ -31,8 +31,8 @@ if [ -f /swapfile ]; then
     echo "检测到已存在的swap文件"
     read -p "是否要删除重新创建? (y/N): " RECREATE
     if [[ "$RECREATE" =~ ^[Yy]$ ]]; then
-        sudo swapoff /swapfile 2>/dev/null
-        sudo rm -f /swapfile
+        swapoff /swapfile 2>/dev/null
+        rm -f /swapfile
         echo "已删除旧的swap文件"
     else
         echo "保持现有swap配置"
@@ -42,7 +42,7 @@ fi
 
 # 创建swap文件
 echo "正在创建 ${SWAP_GB}GB swap文件..."
-if sudo fallocate -l ${SWAP_GB}G /swapfile; then
+if fallocate -l ${SWAP_GB}G /swapfile; then
     echo "swap文件创建成功"
 else
     echo "错误: swap文件创建失败"
@@ -50,10 +50,10 @@ else
 fi
 
 # 设置权限
-sudo chmod 600 /swapfile
+chmod 600 /swapfile
 
 # 格式化为swap
-if sudo mkswap /swapfile; then
+if mkswap /swapfile; then
     echo "swap格式化成功"
 else
     echo "错误: swap格式化失败"
@@ -61,7 +61,7 @@ else
 fi
 
 # 启用swap
-if sudo swapon /swapfile; then
+if swapon /swapfile; then
     echo "swap启用成功"
 else
     echo "错误: swap启用失败"
@@ -70,7 +70,7 @@ fi
 
 # 添加到fstab（如果不存在）
 if ! grep -q "/swapfile" /etc/fstab; then
-    echo "/swapfile none swap sw 0 0" | sudo tee -a /etc/fstab >/dev/null
+    echo "/swapfile none swap sw 0 0" | tee -a /etc/fstab >/dev/null
     echo "已添加到 /etc/fstab，重启后自动挂载"
 else
     echo "/etc/fstab 中已存在swap配置"

@@ -34,14 +34,14 @@ systemctl enable ssh
 systemctl start ssh
 
 # 安装 cron
-sudo systemctl start cron
-sudo systemctl enable cron
+systemctl start cron
+systemctl enable cron
 
 # 更新时间
 ntpdate -u pool.ntp.org && (crontab -l 2>/dev/null; echo "0 * * * * /usr/sbin/ntpdate -u pool.ntp.org") | crontab -
 
 # 设置 dns
-#cat <<EOF | sudo tee /etc/resolv.conf >/dev/null
+#cat <<EOF | tee /etc/resolv.conf >/dev/null
 #nameserver 114.114.114.114
 #nameserver 223.5.5.5
 #nameserver 1.1.1.1
@@ -52,15 +52,15 @@ ntpdate -u pool.ntp.org && (crontab -l 2>/dev/null; echo "0 * * * * /usr/sbin/nt
 rm -rf /etc/localtime && ln -s /usr/share/zoneinfo/Asia/Hong_Kong /etc/localtime
 
 # 设置 locale
-echo 'LC_TIME="en_GB.UTF-8"' | sudo tee /etc/default/locale
-echo 'LANG="en_US.UTF-8"' | sudo tee -a /etc/default/locale
+echo 'LC_TIME="en_GB.UTF-8"' | tee /etc/default/locale
+echo 'LANG="en_US.UTF-8"' | tee -a /etc/default/locale
 
 # 生成 locale
-sudo locale-gen en_US.UTF-8 en_GB.UTF-8
+locale-gen en_US.UTF-8 en_GB.UTF-8
 
 # 设置系统 locale
-sudo localedef -i en_US -f UTF-8 en_US.UTF-8
-sudo localedef -i en_GB -f UTF-8 en_GB.UTF-8
+localedef -i en_US -f UTF-8 en_US.UTF-8
+localedef -i en_GB -f UTF-8 en_GB.UTF-8
 
 # 检查并添加环境变量到 .profile
 {
