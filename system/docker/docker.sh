@@ -30,7 +30,7 @@ echo ""
 echo ""
 echo ""
 # 创建 Docker 网络
-docker network create -d bridge --gateway "172.18.0.1" --subnet "172.18.0.0/16" "local"
+docker network create -d bridge --gateway "172.30.0.1" --subnet "172.30.0.0/16" "local"
 
 # 验证 Docker 和 Compose 版本
 docker version
@@ -38,6 +38,6 @@ docker compose version
 
 echo "======================="
 echo "  安装 Docker 完成"
-echo "  Docker 网络 [ local => 172.18.0.0/16 ]"
-echo "  使用的网关地址: 172.18.0.1"
+echo "  Docker 网络 [ local => 172.30.0.0/16 ]"
+echo "  使用的网关地址: 172.30.0.1"
 echo "======================="

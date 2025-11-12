@@ -4,7 +4,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 echo "======================="
 echo "  开始安装 Docker"
-echo "  ./docker.sh 172.18.0.1 172.18.0.0/16"
+echo "  ./docker.sh 172.30.0.1 172.30.0.0/16"
 echo "======================="
 
 # 尝试从参数或标准输入读取 gateway
@@ -16,7 +16,7 @@ fi
 
 # 如果没有获取到 gateway，则提示用户输入
 if [ -z "$gateway" ]; then
-    read -p "请输入 Docker net 网络的网关地址（例如 172.18.0.1）: " gateway < /dev/tty
+    read -p "请输入 Docker net 网络的网关地址（例如 172.30.0.1）: " gateway < /dev/tty
 fi
 
 # 检查 gateway 是否为空
@@ -34,7 +34,7 @@ fi
 
 # 如果没有获取到 subnet，则提示用户输入
 if [ -z "$subnet" ]; then
-    read -p "请输入 Docker net 网络的子网地址（例如 172.18.0.0/16）: " subnet < /dev/tty
+    read -p "请输入 Docker net 网络的子网地址（例如 172.30.0.0/16）: " subnet < /dev/tty
 fi
 
 # 检查 subnet 是否为空
@@ -73,7 +73,7 @@ echo ""
 echo ""
 echo ""
 # 创建 Docker 网络
-docker network create -d bridge --gateway "172.18.0.1" --subnet "172.18.0.0/16" "local"
+docker network create -d bridge --gateway "172.30.0.1" --subnet "172.30.0.0/16" "local"
 docker network rm net
 docker network create -d bridge --gateway "$gateway" --subnet "$subnet" "net"
 docker network ls

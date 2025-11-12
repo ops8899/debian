@@ -84,7 +84,7 @@ echo ""
 # 创建 Docker 网络
 echo -e "${YELLOW}创建 Docker 网络...${NC}"
 if ! docker network ls | grep -q "local"; then
-    docker network create -d bridge --gateway "172.18.0.1" --subnet "172.18.0.0/16" "local"
+    docker network create -d bridge --gateway "172.30.0.1" --subnet "172.30.0.0/16" "local"
     echo -e "${GREEN}Docker 网络 'local' 创建成功${NC}"
 else
     echo -e "${GREEN}Docker 网络 'local' 已存在，跳过创建${NC}"
@@ -98,8 +98,8 @@ docker compose version
 echo ""
 echo -e "${GREEN}=======================${NC}"
 echo -e "${GREEN}  安装 Docker 完成${NC}"
-echo -e "${GREEN}  Docker 网络 [ local => 172.18.0.0/16 ]${NC}"
-echo -e "${GREEN}  使用的网关地址: 172.18.0.1${NC}"
+echo -e "${GREEN}  Docker 网络 [ local => 172.30.0.0/16 ]${NC}"
+echo -e "${GREEN}  使用的网关地址: 172.30.0.1${NC}"
 if [ "$USE_CHINA_MIRROR" = true ]; then
     echo -e "${GREEN}  使用的镜像源: 清华大学镜像${NC}"
 else
