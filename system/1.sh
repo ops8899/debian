@@ -26,14 +26,15 @@ echo "UFW 参数：$UFW"
 echo "UFW txt域名：$UFW_DOMAIN"
 echo "内网 IP 范围：$LAN_IPS"
 
-# ssh
-bash ssh.sh "$SSH_PORT"
-
 # apt
 bash apt.sh
 
 # 系统基础
 bash init.sh
+
+# ssh
+bash ssh.sh "$SSH_PORT"
+
 bash bin.sh
 # 系统参数
 bash sysctl.sh
