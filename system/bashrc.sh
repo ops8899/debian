@@ -47,6 +47,11 @@ else
   done
   echo "所有 Docker 快捷命令已更新完成"
 fi
+
+sed -i '/外网IP.*国内节点/d' ~/.bashrc && \
+sed -i '2i echo "外网IP1(国内节点): $(timeout 3 curl -s ip.3322.net 2>/dev/null || echo \"获取失败\") | IP2(国外节点): $(timeout 3 curl -s ipinfo.io/ip 2>/dev/null || echo \"获取失败\")" &' ~/.bashrc
+sed -i '/网卡信息:/d; /ip.*addr.*show/d; /ip -4 addr show/d; /echo.*网关/d' ~/.bashrc && sed -i '3i echo "网卡信息:"; ip addr show | grep -E "^[0-9]+:|inet " | grep -v "127.0.0.1" | sed "N;s/\\n/ /" | awk '\''{print "  " substr($2,1,length($2)-1) ": " $4}'\''; echo "  网关: $(ip route show default | awk '\''{print $3}'\'' | head -1)"' ~/.bashrc
+
 # 重新加载 .bashrc
 source ~/.bashrc
 
