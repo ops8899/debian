@@ -63,6 +63,9 @@ systemctl restart sshd
 
 netstat -lnptu|grep sshd
 
+ufw allow "$SSH_PORT"
+ufw status verbose
+
 echo "新 SSH 端口: $SSH_PORT"
 echo "密码和密钥认证均已启用。"
 echo "请确保防火墙允许连接到端口 $SSH_PORT。"

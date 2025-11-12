@@ -16,7 +16,7 @@ apt-get upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--fo
 
 # 安装常用工具和软件，使用选项来避免交互
 apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" \
-  sudo ntpdate openssh-server systemd systemd-sysv cron logrotate iptables \
+  sudo ntpdate openssh-server systemd systemd-sysv cron logrotate iptables ufw \
   net-tools vnstat tcpdump nmap netcat-openbsd isc-dhcp-client iftop wget curl htop vim lsof unzip zip psmisc git ufw rsync \
   traceroute dnsutils  iputils-ping \
   locales sysstat iotop nethogs mtr ncdu pciutils screen expect tree ethtool \
@@ -28,6 +28,10 @@ update-ca-certificates
 
 # hostname
 sed -i "/$(hostname)/d" /etc/hosts && echo "127.0.1.1 $(hostname)" >> /etc/hosts
+# ufw
+systemctl enable ufw
+ufw --force enable
+ufw status verbose
 
 # ssh
 systemctl enable ssh
