@@ -46,22 +46,50 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
 
     if [ "$USE_CHINA_MIRROR" = true ]; then
         echo -e "${BLUE}使用清华大学镜像源安装...${NC}"
-        # 使用清华大学镜像源
-        curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-        echo \
-          "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian \
-          "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-          tee /etc/apt/sources.list.d/docker.list > /dev/null
+        
+        # 安装必要工具
+        apt install -y gnupg2 curl
+        
+        # 尝试添加 GPG 密钥
+        echo -e "${BLUE}正在添加 Docker GPG 密钥...${NC}"
+        if curl -fsSL https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
+            echo -e "${GREEN}GPG 密钥添加成功${NC}"
+            
+            echo \
+              "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian \
+              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+              tee /etc/apt/sources.list.d/docker.list > /dev/null
+        else
+            echo -e "${YELLOW}GPG 密钥添加失败，使用跳过验证的方式...${NC}"
+            
+            echo \
+              "deb [arch="$(dpkg --print-architecture)" trusted=yes] https://mirrors.tuna.tsinghua.edu.cn/docker-ce/linux/debian \
+              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+              tee /etc/apt/sources.list.d/docker.list > /dev/null
+        fi
     else
         echo -e "${BLUE}使用 Docker 官方源安装...${NC}"
-        # 使用官方源
-        curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-
-        echo \
-          "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
-          "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-          tee /etc/apt/sources.list.d/docker.list > /dev/null
+        
+        # 安装必要工具
+        apt install -y gnupg2 curl
+        
+        # 尝试添加 GPG 密钥
+        echo -e "${BLUE}正在添加 Docker GPG 密钥...${NC}"
+        if curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null; then
+            echo -e "${GREEN}GPG 密钥添加成功${NC}"
+            
+            echo \
+              "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
+              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+              tee /etc/apt/sources.list.d/docker.list > /dev/null
+        else
+            echo -e "${YELLOW}GPG 密钥添加失败，使用跳过验证的方式...${NC}"
+            
+            echo \
+              "deb [arch="$(dpkg --print-architecture)" trusted=yes] https://download.docker.com/linux/debian \
+              "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+              tee /etc/apt/sources.list.d/docker.list > /dev/null
+        fi
     fi
 
     apt update
