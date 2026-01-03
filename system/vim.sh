@@ -1,4 +1,6 @@
 #!/bin/bash
+apt update
+apt install -y vim
 
 # 设置Vim在debian 12编辑模式下正常使用鼠标、快捷键复制等功能
 sed -i "s/set mouse=a/set mouse-=a/g" /usr/share/vim/vim*/defaults.vim
